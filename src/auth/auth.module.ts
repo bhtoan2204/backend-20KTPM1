@@ -5,14 +5,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
-import { User } from 'src/user/entity/user.entity';
 import { UserModule } from 'src/user/user.module';
 import { RefreshToken } from './entity/refreshToken.entity';
-import { LocalStrategy } from './strategies/local.strategy';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { RefreshStrategy } from './strategies/refresh.strategy';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { DatabaseModule } from 'src/database/database.module';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
+import { RefreshStrategy } from './strategies/refresh.strategy';
 
 @Module({
     imports: [
@@ -30,7 +29,7 @@ import { DatabaseModule } from 'src/database/database.module';
         }),
         forwardRef(() => UserModule),
     ],
-    providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, JwtRefreshGuard],
+    providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, GoogleStrategy],
     controllers: [AuthController],
     exports: [AuthService],
 })

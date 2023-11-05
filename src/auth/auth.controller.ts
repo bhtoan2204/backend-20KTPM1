@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Req, Body, Res } from '@nestjs/common';
+import { Controller, Post, UseGuards, Req, Body, Res, Get } from '@nestjs/common';
 import { ApiTags } from "@nestjs/swagger";
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -7,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { CurrentUser } from './decorator/current-user.decorator';
 import { User } from 'src/user/entity/user.entity';
 import { Response } from "express"
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -32,5 +33,17 @@ export class AuthController {
     async logout(@Req() request, @Res({ passthrough: true }) response: Response) {
         const user = request.user;
         return this.authService.logout(user, response);
+    }
+
+    @Get('google')
+    @UseGuards(GoogleAuthGuard)
+    async googleLogin(@Req() req) {
+
+    }
+
+    @Get('google/callback')
+    @UseGuards(GoogleAuthGuard)
+    async googleCallback(@Req() req, @Res() res) {
+        return this.authService.googleLogin(req)
     }
 }
