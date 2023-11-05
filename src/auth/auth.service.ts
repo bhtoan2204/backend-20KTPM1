@@ -20,26 +20,35 @@ export class AuthService {
 
     async login(user: User, response: Response) {
         const { accessToken, refreshToken } = await this.getToken(user.id, user.role);
+
         try {
-            try {
-                const refreshTokenEntity = await this.refreshTokenRepository.findOne({ where: { user_id: user.id } });
-                if (refreshTokenEntity != null) {
-                    this.refreshTokenRepository.merge(refreshTokenEntity, { refresh_token: refreshToken });
-                    await this.refreshTokenRepository.save(refreshTokenEntity);
-                }
-            } catch (e) {
-                await this.refreshTokenRepository.create({
+            const refreshTokenEntity = await this.refreshTokenRepository.findOne({ where: { user_id: user.id } });
+
+            if (refreshTokenEntity != null) {
+                // Update the existing refreshToken
+                refreshTokenEntity.refresh_token = refreshToken;
+                refreshTokenEntity.expires_at = new Date(
+                    Date.now() + this.configService.get('REFRESH_EXPIRATION') * 1000
+                );
+                await this.refreshTokenRepository.save(refreshTokenEntity);
+            } else {
+                await this.refreshTokenRepository.save({
                     refresh_token: refreshToken,
-                    user_id: user.id
+                    user_id: user.id,
+                    expires_at: new Date(
+                        Date.now() + this.configService.get('REFRESH_EXPIRATION') * 1000
+                    ),
                 });
             }
+
             const expiresAT = new Date();
-            const expiresRT = new Date();
             expiresAT.setSeconds(
-                expiresAT.getSeconds() + this.configService.get('JWT_EXPIRATION'),
+                expiresAT.getSeconds() + this.configService.get('JWT_EXPIRATION')
             );
+
+            const expiresRT = new Date();
             expiresRT.setSeconds(
-                expiresRT.getSeconds() + this.configService.get('REFRESH_EXPIRATION'),
+                expiresRT.getSeconds() + this.configService.get('REFRESH_EXPIRATION')
             );
 
             response.cookie('accessToken', accessToken, {
@@ -50,15 +59,16 @@ export class AuthService {
                 httpOnly: true,
                 expires: expiresRT,
             });
+
             return {
                 accessToken,
                 refreshToken
-            }
-        }
-        catch (err) {
-            throw new ConflictException(err)
+            };
+        } catch (err) {
+            throw new ConflictException(err);
         }
     }
+
 
     async getToken(userId: any, role: string) {
         const jwtPayload: TokenPayload = {
@@ -114,13 +124,14 @@ export class AuthService {
         return { accessToken, refreshToken }
     }
 
-    async googleLogin(req) {
+    googleLogin(req) {
         if (!req.user) {
-            return 'No user from google'
+            return 'No user from google';
         }
+
         return {
-            message: 'User Info from Google',
-            user: req.user
-        }
+            message: 'User information from google',
+            user: req.user,
+        };
     }
 }

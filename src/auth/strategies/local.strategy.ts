@@ -7,13 +7,13 @@ import { Strategy } from 'passport-local';
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     constructor(private readonly usersService: UserService) {
         super({
-            usernameField: 'username',
+            usernameField: 'email',
             passwordField: 'password',
             passReqToCallback: true
         });
     }
 
     async validate(request: any) {
-        return this.usersService.validateUser(request.body.username, request.body.password);
+        return this.usersService.validateUser(request.body.email, request.body.password);
     }
 }

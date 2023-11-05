@@ -16,9 +16,6 @@ export class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ nullable: false })
-    username: string;
-
     @Column({ nullable: false, unique: true })
     email: string;
 
@@ -30,6 +27,9 @@ export class User {
 
     @Column({ type: 'enum', enum: Role, default: Role.USER })
     role: string;
+
+    @Column({ nullable: true, default: null })
+    avatar: string;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;

@@ -8,10 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { UserModule } from 'src/user/user.module';
 import { RefreshToken } from './entity/refreshToken.entity';
 import { DatabaseModule } from 'src/database/database.module';
-import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
+import { GoogleStrategy } from './strategies/oauthStrategies/google-plus.strategy';
 
 @Module({
     imports: [

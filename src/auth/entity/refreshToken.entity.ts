@@ -20,13 +20,13 @@ export class RefreshToken {
     @Column({ nullable: false, unique: true })
     refresh_token: string;
 
+    @Column({ nullable: false })
+    expires_at: Date;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
-    @OneToOne(() => User)
-    @JoinColumn({ name: 'user_id' })
-    user: User;
 }

@@ -3,11 +3,12 @@ import { ApiTags } from "@nestjs/swagger";
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { LoginDto } from './dto/login.dto';
 import { CurrentUser } from './decorator/current-user.decorator';
 import { User } from 'src/user/entity/user.entity';
 import { Response } from "express"
 import { GoogleAuthGuard } from './guards/google-auth.guard';
+import * as jwt from 'jsonwebtoken';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -18,7 +19,7 @@ export class AuthController {
 
     @UseGuards(LocalAuthGuard)
     @Post('login')
-    async login(@CurrentUser() currentUser: User, @Res({ passthrough: true }) response: Response) {
+    async login(@Body() dto: LoginDto, @CurrentUser() currentUser: User, @Res({ passthrough: true }) response: Response) {
         return await this.authService.login(currentUser, response);
     }
 
@@ -37,13 +38,13 @@ export class AuthController {
 
     @Get('google')
     @UseGuards(GoogleAuthGuard)
-    async googleLogin(@Req() req) {
-
-    }
+    async googleAuth(@Req() req) { }
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
-    async googleCallback(@Req() req, @Res() res) {
-        return this.authService.googleLogin(req)
+    googleAuthRedirect(@Req() req) {
+        const accessToken = req.user.accessToken;
+        console.log(jwt.decode(accessToken))
+        return this.authService.googleLogin(req);
     }
 }

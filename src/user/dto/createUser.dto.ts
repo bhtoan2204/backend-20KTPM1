@@ -10,17 +10,6 @@ import {
 export class CreateUserDto {
     @ApiProperty(
         {
-            description: 'Username of the user',
-            example: 'user123',
-        }
-    )
-    @IsNotEmpty({
-        message: 'Username is required',
-    })
-    username: string;
-
-    @ApiProperty(
-        {
             description: 'Email of the user',
             example: 'example@gmail.com'
         }
