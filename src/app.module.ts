@@ -8,6 +8,7 @@ import { MailModule } from './mailer/mailer.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import * as path from 'path';
+import { mailerConfig } from './config/mailer.config';
 
 @Module({
   imports: [
@@ -19,16 +20,7 @@ import * as path from 'path';
     UserModule,
     AuthModule,
     MailModule,
-    MailerModule.forRoot({
-      transport: 'smtps://user@domain.com:pass@smtp.domain.com',
-      template: {
-        dir: './src/templates/',
-        adapter: new HandlebarsAdapter(),
-        options: {
-          strict: true,
-        },
-      },
-    })
+    MailerModule.forRoot(mailerConfig)
   ],
   controllers: [],
   providers: [],
