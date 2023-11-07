@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+    IsDateString,
     IsNotEmpty,
     IsString,
     Matches,
@@ -43,6 +44,15 @@ export class CreateUserDto {
         message: 'password too weak',
     })
     password: string;
+
+    @ApiProperty(
+        {
+            description: 'Birthday of the user',
+            example: '2000-01-01'
+        }
+    )
+    @IsDateString()
+    birthday: Date;
 
     @ApiProperty(
         {

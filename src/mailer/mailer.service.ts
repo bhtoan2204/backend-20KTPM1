@@ -23,6 +23,8 @@ export class MailService {
             refresh_token: this.configService.get('GOOGLE_REFRESH_TOKEN'),
         });
 
+        console.log(oauth2Client)
+
         const accessToken = await new Promise((resolve, reject) => {
             oauth2Client.getAccessToken((err, token) => {
                 if (err) {
@@ -30,7 +32,7 @@ export class MailService {
                 }
                 resolve(token as string);
             });
-        }).then((token) => token).catch((err) => { console.log(err); });
+        }).then((token) => token as string).catch((err) => { console.log(err); });
 
         console.log(accessToken)
 
@@ -41,11 +43,9 @@ export class MailService {
                 user: this.configService.get('GOOGLE_EMAIL'),
                 clientId: this.configService.get('GOOGLE_CLIENT_ID'),
                 clientSecret: this.configService.get('GOOGLE_CLIENT_SECRET'),
-                accessToken: 'ya29.a0AfB_byAZoHWTKdWYakwryuQF4ZvnfJo16rwx9XnbcP77eY8rFNsoI88PDUMI3Hf1Cm0hfXTY5SehPgTeQ5eier14JGJLHjCpLkr5O_b7W2Yl62dPQVzZ1-Xen0f6ULEgzAP6FAIXMIkDM_y7dCIell58axStKuTYxnjGaCgYKATsSARESFQGOcNnCXTIXP3MlHR74ULtUbrG76A0171',
+                accessToken: ''
             },
         };
-
-        console.log(config)
 
         this.mailerService.addTransporter('gmail', config);
     }

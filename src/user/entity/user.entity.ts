@@ -31,6 +31,9 @@ export class User {
     @Column({ nullable: true, default: null })
     avatar: string;
 
+    @Column({ nullable: false, default: null })
+    birthday: Date;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

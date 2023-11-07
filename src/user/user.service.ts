@@ -21,7 +21,8 @@ export class UserService {
                 email: createUserDto.email,
                 password: hashPassword,
                 role: createUserDto.role,
-                fullname: createUserDto.fullname
+                fullname: createUserDto.fullname,
+                birthday: createUserDto.birthday,
             });
 
             return {
