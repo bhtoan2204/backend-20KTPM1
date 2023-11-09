@@ -5,15 +5,15 @@ import { Strategy } from 'passport-local';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
-    constructor(private readonly usersService: UserService) {
-        super({
-            usernameField: 'email',
-            passwordField: 'password',
-            passReqToCallback: true
-        });
-    }
+  constructor(private readonly usersService: UserService) {
+    super({
+      usernameField: 'email',
+      passwordField: 'password',
+      passReqToCallback: true,
+    });
+  }
 
-    async validate(request: any) {
-        return this.usersService.validateUser(request.body.email, request.body.password);
-    }
+  async validate(request: any) {
+    return this.usersService.validateUser(request.body.email, request.body.password);
+  }
 }

@@ -14,23 +14,23 @@ import { RefreshStrategy } from './strategies/refresh.strategy';
 import { GoogleStrategy } from './strategies/oauthStrategies/google-plus.strategy';
 
 @Module({
-    imports: [
-        DatabaseModule,
-        TypeOrmModule.forFeature([RefreshToken]),
-        PassportModule,
-        JwtModule.registerAsync({
-            useFactory: (configService: ConfigService) => ({
-                secret: configService.get<string>('JWT_SECRET'),
-                signOptions: {
-                    expiresIn: `${configService.get('JWT_EXPIRATION')}s`,
-                },
-            }),
-            inject: [ConfigService],
-        }),
-        forwardRef(() => UserModule),
-    ],
-    providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, GoogleStrategy],
-    controllers: [AuthController],
-    exports: [AuthService],
+  imports: [
+    DatabaseModule,
+    TypeOrmModule.forFeature([RefreshToken]),
+    PassportModule,
+    JwtModule.registerAsync({
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: `${configService.get('JWT_EXPIRATION')}s`,
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    forwardRef(() => UserModule),
+  ],
+  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, GoogleStrategy],
+  controllers: [AuthController],
+  exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

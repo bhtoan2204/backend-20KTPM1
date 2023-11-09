@@ -8,7 +8,7 @@ import { Options } from 'nodemailer/lib/smtp-transport';
 export class MailService {
     constructor(
         private mailerService: MailerService,
-        private configService: ConfigService
+        private configService: ConfigService,
     ) { }
 
     private async setTransport() {
@@ -16,14 +16,14 @@ export class MailService {
         const oauth2Client = new OAuth2(
             this.configService.get('GOOGLE_CLIENT_ID'),
             this.configService.get('GOOGLE_CLIENT_SECRET'),
-            'https://developers.google.com/oauthplayground'
+            'https://developers.google.com/oauthplayground',
         );
 
         oauth2Client.setCredentials({
             refresh_token: this.configService.get('GOOGLE_REFRESH_TOKEN'),
         });
 
-        console.log(oauth2Client)
+        console.log(oauth2Client);
 
         const accessToken = await new Promise((resolve, reject) => {
             oauth2Client.getAccessToken((err, token) => {
@@ -32,9 +32,13 @@ export class MailService {
                 }
                 resolve(token as string);
             });
-        }).then((token) => token as string).catch((err) => { console.log(err); });
+        })
+            .then((token) => token as string)
+            .catch((err) => {
+                console.log(err);
+            });
 
-        console.log(accessToken)
+        console.log(accessToken);
 
         const config: Options = {
             service: 'gmail',
@@ -43,7 +47,7 @@ export class MailService {
                 user: this.configService.get('GOOGLE_EMAIL'),
                 clientId: this.configService.get('GOOGLE_CLIENT_ID'),
                 clientSecret: this.configService.get('GOOGLE_CLIENT_SECRET'),
-                accessToken: ''
+                accessToken: '',
             },
         };
 
@@ -52,21 +56,22 @@ export class MailService {
 
     public async sendMail() {
         await this.setTransport();
-        this.mailerService.sendMail({
-            transporterName: 'gmail',
-            to: 'banhhaotoan2002@gmail.com',
-            from: 'mjkundta@gmail.com',
-            subject: 'Testing Nest MailerModule ✔',
-            template: 'action',
-            context: {
-                code: '38320'
-            },
-        })
-            .then(success => {
-                console.log(success)
+        this.mailerService
+            .sendMail({
+                transporterName: 'gmail',
+                to: 'banhhaotoan2002@gmail.com',
+                from: 'mjkundta@gmail.com',
+                subject: 'Testing Nest MailerModule ✔',
+                template: 'action',
+                context: {
+                    code: '38320',
+                },
             })
-            .catch(err => {
-                console.log(err)
+            .then((success) => {
+                console.log(success);
+            })
+            .catch((err) => {
+                console.log(err);
             });
     }
 }

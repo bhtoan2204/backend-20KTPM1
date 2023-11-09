@@ -20,9 +20,9 @@ import { mailerConfig } from './config/mailer.config';
     UserModule,
     AuthModule,
     MailModule,
-    MailerModule.forRoot(mailerConfig)
+    MailerModule.forRoot(mailerConfig),
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

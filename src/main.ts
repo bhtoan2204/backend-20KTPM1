@@ -15,7 +15,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, configSwagger);
-  SwaggerModule.setup('api', app, document, {
+  SwaggerModule.setup('', app, document, {
     customfavIcon: 'https://cdn-icons-png.flaticon.com/512/10095/10095455.png',
     customJs: [
       'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.min.js',
@@ -28,8 +28,12 @@ async function bootstrap() {
     ],
   });
 
+  app.setGlobalPrefix('api');
+
   // const reflector = app.get(Reflector);
   // app.useGlobalGuards(new RolesGuard(reflector));
+
+  app.enableCors();
 
   await app.listen(configService.get('PORT'));
 }
