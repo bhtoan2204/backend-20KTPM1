@@ -21,7 +21,7 @@ export class AuthService {
 
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
-  ) {}
+  ) { }
 
   async login(user: User, response: Response) {
     const { accessToken, refreshToken } = await this.getToken(user.id, user.role);
@@ -64,6 +64,8 @@ export class AuthService {
       return {
         accessToken,
         refreshToken,
+        expiresAT,
+        expiresRT
       };
     } catch (err) {
       throw new ConflictException(err);
@@ -117,14 +119,28 @@ export class AuthService {
       } else {
         throw err;
       }
-    }
+    };
+
+    const expiresAT = new Date();
+    expiresAT.setSeconds(expiresAT.getSeconds() + this.configService.get('JWT_EXPIRATION'));
+
+    const expiresRT = new Date();
+    expiresRT.setSeconds(expiresRT.getSeconds() + this.configService.get('REFRESH_EXPIRATION'));
+
     response.cookie('accessToken', accessToken, {
       httpOnly: true,
+      expires: expiresAT,
     });
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
+      expires: expiresRT,
     });
-    return { accessToken, refreshToken };
+    return {
+      accessToken,
+      refreshToken,
+      expiresAT,
+      expiresRT
+    };
   }
 
   googleLogin(req) {

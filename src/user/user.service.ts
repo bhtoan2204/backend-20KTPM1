@@ -17,13 +17,16 @@ export class UserService {
       await this.validateCreateUser(createUserDto.email);
 
       const hashPassword = await bcrypt.hash(createUserDto.password, 10);
+
       const newUser = await this.userRepository.save({
         email: createUserDto.email,
         password: hashPassword,
         role: createUserDto.role,
         fullname: createUserDto.fullname,
-        birthday: createUserDto.birthday,
+        birthday: new Date(),
       });
+
+      console.log(newUser);
 
       return {
         user_info: {
@@ -72,6 +75,9 @@ export class UserService {
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new UnauthorizedException('Credentials are not valid.');
+    }
     const passwordIsValid = await bcrypt.compare(password, user.password);
     if (!passwordIsValid) {
       throw new UnauthorizedException('Credentials are not valid.');

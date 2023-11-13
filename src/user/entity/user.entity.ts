@@ -19,7 +19,7 @@ export class User {
   @Column({ nullable: false, unique: true })
   email: string;
 
-  @Column({ nullable: false, unique: true })
+  @Column({ nullable: false })
   fullname: string;
 
   @Column({ nullable: false })
@@ -31,7 +31,7 @@ export class User {
   @Column({ nullable: true, default: null })
   avatar: string;
 
-  @Column({ nullable: false, default: null })
+  @Column({ nullable: true, default: null })
   birthday: Date;
 
   @CreateDateColumn({ name: 'created_at' })

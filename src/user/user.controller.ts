@@ -15,9 +15,8 @@ export class UserController {
 
   @Post('/signup')
   @ApiOperation({ summary: 'Sign up' })
-  create(@Body() createUserDto: CreateUserDto) {
-    const token = Math.floor(1000 + Math.random() * 9000).toString();
-
+  async create(@Body() createUserDto: CreateUserDto) {
+    console.log(createUserDto);
     return this.usersService.create(createUserDto);
   }
 
