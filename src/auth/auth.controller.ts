@@ -6,8 +6,6 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from './decorator/current-user.decorator';
 import { User } from '../user/entity/user.entity';
 import { Response } from 'express';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
-import * as jwt from 'jsonwebtoken';
 import { LoginDto } from './dto/login.dto';
 
 @ApiTags('auth')
