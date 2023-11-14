@@ -5,16 +5,5 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true
-  },
-  "projects": {
-    "libs": {
-      "type": "library",
-      "root": "libs/libs",
-      "entryFile": "index",
-      "sourceRoot": "libs/libs/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/libs/tsconfig.lib.json"
-      }
-    }
   }
 }
