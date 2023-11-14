@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { typeOrmConfig } from './utils/config/typeorm.config';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import * as Joi from 'joi';
+import { User } from './user/entity/user.entity';
+import { RefreshToken } from './auth/entity/refreshToken.entity';
 
 @Module({
   imports: [
@@ -25,7 +26,23 @@ import * as Joi from 'joi';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    TypeOrmModule.forRoot(typeOrmConfig),
+    TypeOrmModule.forRootAsync(
+      {
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          type: 'postgres',
+          host: configService.get('DB_HOST'),
+          port: configService.get('DB_PORT'),
+          username: configService.get('DB_USERNAME'),
+          password: configService.get('DB_PASSWORD'),
+          database: configService.get('DB_DATABASE'),
+          entities: [User, RefreshToken],
+          synchronize: true,
+          ssl: {
+            rejectUnauthorized: false,
+          },
+        })
+      }),
     UserModule,
     AuthModule,
   ],
