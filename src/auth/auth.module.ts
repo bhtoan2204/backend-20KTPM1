@@ -9,7 +9,6 @@ import { RefreshToken } from './entity/refreshToken.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
-import { GoogleStrategy } from './strategies/oauthStrategies/google-plus.strategy';
 import { DatabaseModule } from '../utils/database/database.module';
 import { UserModule } from '../user/user.module';
 
@@ -29,7 +28,7 @@ import { UserModule } from '../user/user.module';
     }),
     forwardRef(() => UserModule),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, GoogleStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })

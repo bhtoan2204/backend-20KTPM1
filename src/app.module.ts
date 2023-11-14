@@ -4,9 +4,6 @@ import { typeOrmConfig } from './utils/config/typeorm.config';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import { MailModule } from './mailer/mailer.module';
-import { MailerModule } from '@nestjs-modules/mailer';
-import { mailerConfig } from './utils/config/mailer.config';
 import * as Joi from 'joi';
 
 @Module({
@@ -31,8 +28,6 @@ import * as Joi from 'joi';
     TypeOrmModule.forRoot(typeOrmConfig),
     UserModule,
     AuthModule,
-    MailModule,
-    MailerModule.forRoot(mailerConfig),
   ],
   controllers: [],
   providers: [],
