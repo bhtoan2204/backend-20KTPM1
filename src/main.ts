@@ -29,9 +29,6 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  // const reflector = app.get(Reflector);
-  // app.useGlobalGuards(new RolesGuard(reflector));
-
   app.enableCors();
 
   await app.listen(configService.get('PORT'));
