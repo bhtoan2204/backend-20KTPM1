@@ -7,7 +7,7 @@ import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { UserModule } from 'src/user/user.module';
 import { RefreshToken } from './entity/refreshToken.entity';
-import { DatabaseModule } from 'libs/database/database.module';
+import { DatabaseModule } from 'src/utils/database/database.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';

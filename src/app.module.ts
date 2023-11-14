@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { typeOrmConfig } from '../libs/config/typeorm.config';
+import { typeOrmConfig } from './utils/config/typeorm.config';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mailer/mailer.module';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { mailerConfig } from '../libs/config/mailer.config';
+import { mailerConfig } from './utils/config/mailer.config';
 import * as Joi from 'joi';
 
 @Module({
