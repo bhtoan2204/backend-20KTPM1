@@ -16,7 +16,6 @@ export class UserController {
   @Post('/signup')
   @ApiOperation({ summary: 'Sign up' })
   async create(@Body() createUserDto: CreateUserDto) {
-    console.log(createUserDto);
     return this.usersService.create(createUserDto);
   }
 

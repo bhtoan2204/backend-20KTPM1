@@ -26,8 +26,6 @@ export class UserService {
         birthday: new Date(),
       });
 
-      console.log(newUser);
-
       return {
         user_info: {
           user_id: newUser.id,

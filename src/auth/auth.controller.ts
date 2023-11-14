@@ -37,16 +37,4 @@ export class AuthController {
     const user = request.user;
     return this.authService.logout(user, response);
   }
-
-  @Get('google')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuth(@Req() req) { }
-
-  @Get('google/callback')
-  @UseGuards(GoogleAuthGuard)
-  googleAuthRedirect(@Req() req) {
-    const accessToken = req.user.accessToken;
-    console.log(jwt.decode(accessToken));
-    return this.authService.googleLogin(req);
-  }
 }
