@@ -25,7 +25,7 @@ import { UserModule } from '../user/user.module';
       }),
       inject: [ConfigService],
     }),
-    forwardRef(() => UserModule),
+    UserModule,
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy],
   controllers: [AuthController],

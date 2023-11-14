@@ -6,7 +6,6 @@ import { AuthModule } from './auth/auth.module';
 import * as Joi from 'joi';
 import { User } from './user/entity/user.entity';
 import { RefreshToken } from './auth/entity/refreshToken.entity';
-import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -47,7 +46,7 @@ import { AppController } from './app.controller';
     UserModule,
     AuthModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [],
 })
 export class AppModule { }
