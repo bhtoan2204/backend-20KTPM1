@@ -5,13 +5,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
-import { UserModule } from 'src/user/user.module';
 import { RefreshToken } from './entity/refreshToken.entity';
-import { DatabaseModule } from 'src/utils/database/database.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
 import { GoogleStrategy } from './strategies/oauthStrategies/google-plus.strategy';
+import { DatabaseModule } from '../utils/database/database.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [

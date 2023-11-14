@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { RefreshToken } from './entity/refreshToken.entity';
 import { TokenPayload } from './interface/tokenPayload.interface';
-import { User } from 'src/user/entity/user.entity';
+import { User } from '../user/entity/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Response } from 'express';
 

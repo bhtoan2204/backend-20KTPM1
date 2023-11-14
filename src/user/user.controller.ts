@@ -2,9 +2,9 @@ import { Body, Controller, Post, Get, UseGuards, Req, Patch } from '@nestjs/comm
 import { UserService } from './user.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { TokenPayload } from 'src/auth/interface/tokenPayload.interface';
-import { CurrentUser } from 'src/auth/decorator/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { TokenPayload } from '../auth/interface/tokenPayload.interface';
+import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from './entity/user.entity';
 import { EditProfileDTO } from './dto/editProfile.dto';
 

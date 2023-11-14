@@ -1,7 +1,7 @@
 import { TypeOrmModuleOptions } from "@nestjs/typeorm";
 import { join } from "path";
-import { RefreshToken } from "src/auth/entity/refreshToken.entity";
-import { User } from "src/user/entity/user.entity";
+import { RefreshToken } from "../../auth/entity/refreshToken.entity";
+import { User } from "../../user/entity/user.entity";
 import { DataSource, DataSourceOptions } from "typeorm";
 
 export const getDatabaseDataSourceOptions = ({
