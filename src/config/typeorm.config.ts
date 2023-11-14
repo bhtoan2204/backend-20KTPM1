@@ -22,19 +22,26 @@ export const getDatabaseDataSourceOptions = ({
     password: password,
     entities: [User, RefreshToken],
     synchronize: true,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   };
 };
 
+
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: 'postgres',
-  host: 'db',
+  host: 'dpg-cl6egmquuipc73cbo7f0-a.singapore-postgres.render.com',
   port: 5432,
-  username: 'postgres',
-  password: 'postgres',
-  database: 'postgres',
+  username: 'classroom_30wr_user',
+  password: 'RWLy8uF0mprZrGuQ9czGpbWtkxrv6Wjr',
+  database: 'classroom_30wr',
   // entities: [join(__dirname, '../', '**', '*.entity.{ts,js}')],
   entities: [User, RefreshToken],
   synchronize: true,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 };
 
 export const DatabaseSource = new DataSource({
