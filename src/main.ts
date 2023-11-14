@@ -24,6 +24,6 @@ async function bootstrap() {
 
   app.use(helmet())
 
-  await app.listen(configService.get('PORT'));
+  await app.listen(configService.get<number>('PORT') || 8080);
 }
 bootstrap();
