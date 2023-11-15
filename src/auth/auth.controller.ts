@@ -4,9 +4,9 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from './decorator/current-user.decorator';
-import { User } from '../user/entity/user.entity';
 import { Response } from 'express';
 import { LoginDto } from './dto/login.dto';
+import { User } from '../user/schema/user.schema';
 
 @ApiTags('auth')
 @Controller('auth')

@@ -1,24 +1,25 @@
-import { HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { User } from './entity/user.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import * as bcrypt from 'bcrypt';
 import { RegistrationException } from './exception/registration.exception';
+import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from './schema/user.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectModel(User.name)
+    private userRepository: Model<UserDocument>,
   ) { }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<any> {
     try {
       await this.validateCreateUser(createUserDto.email);
 
       const hashPassword = await bcrypt.hash(createUserDto.password, 10);
 
-      const newUser = await this.userRepository.save({
+      const newUser = new this.userRepository({
         email: createUserDto.email,
         password: hashPassword,
         role: createUserDto.role,
@@ -26,9 +27,11 @@ export class UserService {
         birthday: new Date(),
       });
 
+      await newUser.save();
+
       return {
         user_info: {
-          user_id: newUser.id,
+          user_id: newUser._id,
           email: newUser.email,
         },
         message: 'User created successfully',
@@ -42,7 +45,7 @@ export class UserService {
   async validateCreateUser(email: string) {
     let checkEmailUser: User;
     try {
-      checkEmailUser = await this.userRepository.findOne({ where: { email } });
+      checkEmailUser = await this.userRepository.findOne({ email }).exec();
     } catch (err) {
       throw new RegistrationException(err.message, err.http_code || 500, false);
     }
@@ -68,11 +71,11 @@ export class UserService {
   }
 
   async getUserById(entryId: string) {
-    return this.userRepository.findOne({ where: { id: entryId } });
+    return await this.userRepository.findOne({ _id: entryId }).exec();
   }
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository.findOne({ email }).exec();
     if (!user) {
       throw new UnauthorizedException('Credentials are not valid.');
     }
@@ -83,19 +86,39 @@ export class UserService {
   }
 
   async getUserOrCreate(email: string): Promise<any> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository.findOne({ email });
     if (!user) {
       return { user: null, is_exist: false };
     } else return { user, is_exist: true };
   }
 
-  async editProfile(id: string, dto: any): Promise<any> {
+  async editProfile(_id: string, dto: any): Promise<any> {
     try {
-      const user = await this.userRepository.findOne({ where: { id } });
+      const user = await this.userRepository.findOneAndUpdate(
+        { _id },
+        {
+          fullname: dto.fullname,
+          birthday: dto.birthday
+        },
+      ).exec();
+
       user.fullname = dto.fullname;
       user.birthday = dto.birthday;
-      await this.userRepository.save(user);
       return { message: "Update profile successfully" }
+    }
+    catch (err) { throw err; }
+  }
+
+  async updateRefresh(id: string, refreshToken: string): Promise<any> {
+    try {
+      await this.userRepository.findOneAndUpdate({ id }, { refreshToken }, { new: true }).exec();
+    }
+    catch (err) { throw err; }
+  }
+
+  async softDeleteRefresh(id: string): Promise<any> {
+    try {
+      await this.userRepository.findOneAndUpdate({ id }, { refreshToken: null }, { new: true }).exec();
     }
     catch (err) { throw err; }
   }

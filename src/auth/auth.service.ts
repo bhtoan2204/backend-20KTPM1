@@ -6,45 +6,25 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Repository } from 'typeorm';
-import { RefreshToken } from './entity/refreshToken.entity';
 import { TokenPayload } from './interface/tokenPayload.interface';
-import { User } from '../user/entity/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Response } from 'express';
+import { User } from '../user/schema/user.schema';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly userService: UserService
 
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepository: Repository<RefreshToken>,
   ) { }
 
   async login(user: User, response: Response) {
-    const { accessToken, refreshToken } = await this.getToken(user.id, user.role);
+    const { accessToken, refreshToken } = await this.getToken(user._id, user.role);
 
     try {
-      const refreshTokenEntity = await this.refreshTokenRepository.findOne({
-        where: { user_id: user.id },
-      });
-
-      if (refreshTokenEntity != null) {
-        // Update the existing refreshToken
-        refreshTokenEntity.refresh_token = refreshToken;
-        refreshTokenEntity.expires_at = new Date(
-          Date.now() + this.configService.get('REFRESH_EXPIRATION') * 1000,
-        );
-        await this.refreshTokenRepository.save(refreshTokenEntity);
-      } else {
-        await this.refreshTokenRepository.save({
-          refresh_token: refreshToken,
-          user_id: user.id,
-          expires_at: new Date(Date.now() + this.configService.get('REFRESH_EXPIRATION') * 1000),
-        });
-      }
+      this.userService.updateRefresh(user._id, refreshToken);
 
       const expiresAT = new Date();
       expiresAT.setSeconds(expiresAT.getSeconds() + this.configService.get('JWT_EXPIRATION'));
@@ -74,7 +54,7 @@ export class AuthService {
 
   async getToken(userId: any, role: string) {
     const jwtPayload: TokenPayload = {
-      id: userId,
+      _id: userId,
       role,
     };
     const [accessToken, refreshToken] = await Promise.all([
@@ -99,22 +79,16 @@ export class AuthService {
       httpOnly: true,
       expires: new Date(),
     });
-    this.refreshTokenRepository.delete({ user_id: user.id });
+    this.userService.softDeleteRefresh(user._id);
   }
 
   async refresh(user: User, response: Response) {
-    const { accessToken, refreshToken } = await this.getToken(user.id, user.role);
+    const { accessToken, refreshToken } = await this.getToken(user._id, user.role);
     try {
-      const refreshTokenEntity = await this.refreshTokenRepository.findOne({
-        where: { user_id: user.id },
-      });
-      if (refreshTokenEntity) {
-        refreshTokenEntity.refresh_token = refreshToken;
-        await this.refreshTokenRepository.save(refreshTokenEntity);
-      }
+      await this.userService.updateRefresh(user._id, refreshToken);
     } catch (err) {
       if (err instanceof NotFoundException) {
-        await this.refreshTokenRepository.delete({ user_id: user.id });
+        await this.userService.softDeleteRefresh(user._id);
         throw new UnauthorizedException();
       } else {
         throw err;

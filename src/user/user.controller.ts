@@ -5,8 +5,8 @@ import { CreateUserDto } from './dto/createUser.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TokenPayload } from '../auth/interface/tokenPayload.interface';
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
-import { User } from './entity/user.entity';
 import { EditProfileDTO } from './dto/editProfile.dto';
+import { User } from './schema/user.schema';
 
 @ApiTags('user')
 @Controller('user')
@@ -23,18 +23,14 @@ export class UserController {
   @ApiOperation({ summary: 'Get user profile' })
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() request) {
-    const { id } = request.user as TokenPayload;
-    return this.usersService.getUserById(id);
+    const { _id } = request.user as TokenPayload;
+    return this.usersService.getUserById(_id);
   }
-
-  @Post('/send-otp')
-  @ApiOperation({ summary: 'Send OTP to email' })
-  async sendOtp(@Body() body: { email: string }) { }
 
   @Patch('/edit_profile')
   @UseGuards(JwtAuthGuard)
   async editProfile(@CurrentUser() user: User, @Body() dto: EditProfileDTO, @Body() body: { name: string }) {
-    const { id } = user;
-    return this.usersService.editProfile(id, dto);
+    const { _id } = user;
+    return this.usersService.editProfile(_id, dto);
   }
 }

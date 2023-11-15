@@ -1,4 +1,4 @@
 export interface TokenPayload {
-  id: string;
+  _id: string;
   role: string;
 }
