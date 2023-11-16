@@ -31,10 +31,4 @@ export class AuthController {
     return this.authService.refresh(currentUser);
   }
 
-  @UseGuards(JwtRefreshGuard)
-  @Post('logout')
-  async logout(@Req() request) {
-    const user = request.user;
-    return this.authService.logout(user);
-  }
 }
