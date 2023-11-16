@@ -55,12 +55,6 @@ export class User {
 
     @Prop({ default: null })
     refreshToken: string;
-
-    @Prop({ default: new Date() })
-    create_At: Date;
-
-    @Prop({ default: new Date() })
-    update_At: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

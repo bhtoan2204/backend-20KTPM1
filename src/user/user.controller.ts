@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Get, UseGuards, Req, Patch } from '@nestjs/common';
 import { UserService } from './user.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TokenPayload } from '../auth/interface/tokenPayload.interface';
@@ -10,6 +10,7 @@ import { User } from './schema/user.schema';
 
 @ApiTags('user')
 @Controller('user')
+@ApiBearerAuth()
 export class UserController {
   constructor(private readonly usersService: UserService) { }
 

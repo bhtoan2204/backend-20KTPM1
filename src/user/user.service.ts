@@ -71,7 +71,14 @@ export class UserService {
   }
 
   async getUserById(entryId: string) {
-    return await this.userRepository.findOne({ _id: entryId }).exec();
+    return await this.userRepository.findOne({ _id: entryId })
+      .select('-password')
+      .select('-refreshToken')
+      .select('-createAt')
+      .select('-updatedAt')
+      .select('-__v')
+      .select('-id')
+      .exec();
   }
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -82,7 +89,9 @@ export class UserService {
     const passwordIsValid = await bcrypt.compare(password, user.password);
     if (!passwordIsValid) {
       throw new UnauthorizedException('Credentials are not valid.');
-    } else return user;
+    } else {
+      return user;
+    };
   }
 
   async getUserOrCreate(email: string): Promise<any> {

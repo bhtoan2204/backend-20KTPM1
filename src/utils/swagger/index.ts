@@ -22,7 +22,6 @@ export function setupSwagger(app: INestApplication): void {
         .setDescription(SWAGGER_API_DESCRIPTION)
         .setVersion(SWAGGER_API_CURRENT_VERSION)
         .addBearerAuth()
-
         .build();
 
     const options: SwaggerDocumentOptions = {
