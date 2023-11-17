@@ -1,21 +1,33 @@
-import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import * as bcrypt from 'bcrypt';
 import { RegistrationException } from './exception/registration.exception';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schema/user.schema';
 import { Model } from 'mongoose';
+import { MailService } from 'src/mail/mail.service';
+import { generateRandomPassword } from 'src/utils/generator/password.generator';
+import { ChangePassworDto } from './dto/changePassword.dto';
+import { RegisterOtp, RegisterOtpDocument } from './schema/registerOtp.schema';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name)
     private userRepository: Model<UserDocument>,
+    @InjectModel(RegisterOtp.name)
+    private registerOtpRepository: Model<RegisterOtpDocument>,
+    @Inject(MailService)
+    private readonly mailService: MailService,
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
     try {
       await this.validateCreateUser(createUserDto.email);
+      const otpRecord = await this.registerOtpRepository.findOne({ email: createUserDto.email }).exec();
+
+      if (!otpRecord) throw new Error("OTP not found");
+      if (otpRecord.otp !== createUserDto.otp) throw new Error("OTP not match");
 
       const hashPassword = await bcrypt.hash(createUserDto.password, 10);
 
@@ -28,6 +40,7 @@ export class UserService {
       });
 
       await newUser.save();
+      await this.registerOtpRepository.deleteOne({ email: createUserDto.email }).exec();
 
       return {
         user_info: {
@@ -94,11 +107,10 @@ export class UserService {
     };
   }
 
-  async getUserOrCreate(email: string): Promise<any> {
-    const user = await this.userRepository.findOne({ email });
-    if (!user) {
-      return { user: null, is_exist: false };
-    } else return { user, is_exist: true };
+  async checkExist(email: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({ email }).exec();
+    if (user) return true;
+    else return false;
   }
 
   async editProfile(_id: string, dto: any): Promise<any> {
@@ -130,5 +142,82 @@ export class UserService {
       await this.userRepository.findOneAndUpdate({ id }, { refreshToken: null }, { new: true }).exec();
     }
     catch (err) { throw err; }
+  }
+
+  async validateGoogleUser(details: any) {
+    const user = await this.userRepository.findOne({ email: details._json.email }).exec();
+    if (user) return user;
+    else {
+      const newUser = new this.userRepository({
+        email: details._json.email,
+        password: generateRandomPassword(60),
+        role: 'user',
+        fullname: details._json.family_name + ' ' + details._json.given_name,
+        avatar: details._json.picture,
+        birthday: new Date(),
+      });
+      return await newUser.save();
+    }
+  }
+
+  async findUserById(id: string): Promise<User> {
+    return await this.userRepository.findOne({ _id: id }).exec();
+  }
+
+  async changePassword(id: string, dto: ChangePassworDto): Promise<any> {
+    if (dto.password !== dto.rewrite_password) {
+      throw new Error('New password must be different from old password');
+    }
+    else {
+      const hashPassword = await bcrypt.hash(dto.password, 10);
+      await this.userRepository.findOneAndUpdate(
+        { _id: id },
+        {
+          password: hashPassword,
+        },
+      ).exec();
+      return {
+        message: "Change password successfully"
+      }
+    }
+  }
+
+  async updatePassword(email: string, password: string) {
+    const hashPassword = await bcrypt.hash(password, 10);
+    await this.userRepository.findOneAndUpdate(
+      { email },
+      {
+        password: hashPassword,
+      },
+    ).exec();
+
+    return { message: "Update password successfully" };
+  }
+
+  async sendRegisterOTP(email: string) {
+    try {
+      const isExist = await this.checkExist(email);
+      if (isExist) return { message: "This email is already created" };
+
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      const otpRecord = await this.registerOtpRepository.findOne({ email }).exec();
+      if (otpRecord) {
+        otpRecord.otp = otp;
+        otpRecord.save();
+      }
+      else {
+        const newOtp = new this.registerOtpRepository({
+          email,
+          otp,
+        });
+        await newOtp.save();
+      }
+      const title = "Register your account";
+      await this.mailService.sendOtp(email, otp, title);
+      return { message: "OTP sent" };
+    }
+    catch (err) {
+      throw new ConflictException(err);
+    }
   }
 }

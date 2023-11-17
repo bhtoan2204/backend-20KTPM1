@@ -22,6 +22,16 @@ export function setupSwagger(app: INestApplication): void {
         .setDescription(SWAGGER_API_DESCRIPTION)
         .setVersion(SWAGGER_API_CURRENT_VERSION)
         .addBearerAuth()
+        .addOAuth2({
+            type: 'oauth2',
+            flows: {
+                authorizationCode: {
+                    authorizationUrl: 'YOUR_AUTHORIZATION_URL',
+                    tokenUrl: 'YOUR_TOKEN_URL',
+                    scopes: {},
+                },
+            },
+        })
         .build();
 
     const options: SwaggerDocumentOptions = {
