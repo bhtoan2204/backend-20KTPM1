@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -48,4 +48,11 @@ export class CreateUserDto {
     message: 'Role is required',
   })
   role: string;
+
+  @IsNumber()
+  @ApiProperty({
+    description: 'Your OTP',
+    example: 123456,
+  })
+  otp: number;
 }

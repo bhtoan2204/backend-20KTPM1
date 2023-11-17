@@ -8,6 +8,7 @@ import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { EditProfileDTO } from './dto/editProfile.dto';
 import { User } from './schema/user.schema';
 import { ChangePassworDto } from './dto/changePassword.dto';
+import { sendOTPDto } from 'src/auth/dto/sendOTP.dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -44,5 +45,11 @@ export class UserController {
   async changePassword(@CurrentUser() user: User, @Body() dto: ChangePassworDto) {
     const { _id } = user;
     return this.usersService.changePassword(_id, dto);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('/send_registerOtp')
+  async sendRegisterOTP(@Body() dto: sendOTPDto) {
+    return this.usersService.sendRegisterOTP(dto.email);
   }
 }

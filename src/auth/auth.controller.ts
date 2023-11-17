@@ -53,7 +53,7 @@ export class AuthController {
 
   @HttpCode(HttpStatus.CREATED)
   @Public()
-  @Post('send_otp')
+  @Post('send_resetOtp')
   async sendOTP(@Body() dto: sendOTPDto) {
     return this.authService.sendOTP(dto.email);
   }

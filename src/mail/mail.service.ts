@@ -51,7 +51,7 @@ export class MailService {
         this.mailerService
             .sendMail({
                 transporterName: 'gmail',
-                to: 'banhhaotoan2002@gmail.com',
+                to: 'mjkundta@gmail.com',
                 from: 'mjkundta@gmail.com',
                 subject: 'Testing Nest MailerModule ✔',
                 template: 'action',
@@ -68,14 +68,14 @@ export class MailService {
             });
     }
 
-    public async sendOtp(email, otp) {
+    public async sendOtp(email, otp, title) {
         await this.setTransport();
         this.mailerService
             .sendMail({
                 transporterName: 'gmail',
                 to: email,
                 from: 'mjkundta@gmail.com',
-                subject: "Reset your password",
+                subject: title,
                 template: 'action',
                 context: {
                     code: otp,

@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import * as bcrypt from 'bcrypt';
 import { RegistrationException } from './exception/registration.exception';
@@ -6,20 +6,29 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schema/user.schema';
 import { Model } from 'mongoose';
 import { MailService } from 'src/mail/mail.service';
-import { generate } from 'rxjs';
 import { generateRandomPassword } from 'src/utils/generator/password.generator';
 import { ChangePassworDto } from './dto/changePassword.dto';
+import { RegisterOtp, RegisterOtpDocument } from './schema/registerOtp.schema';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name)
     private userRepository: Model<UserDocument>,
+    @InjectModel(RegisterOtp.name)
+    private registerOtpRepository: Model<RegisterOtpDocument>,
+    @Inject(MailService)
+    private readonly mailService: MailService,
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
     try {
       await this.validateCreateUser(createUserDto.email);
+      const otpRecord = await this.registerOtpRepository.findOne({ email: createUserDto.email }).exec();
+
+      if (!otpRecord) throw new Error("OTP not found");
+      if (otpRecord.otp !== createUserDto.otp) throw new Error("OTP not match");
+
       const hashPassword = await bcrypt.hash(createUserDto.password, 10);
 
       const newUser = new this.userRepository({
@@ -31,6 +40,7 @@ export class UserService {
       });
 
       await newUser.save();
+      await this.registerOtpRepository.deleteOne({ email: createUserDto.email }).exec();
 
       return {
         user_info: {
@@ -180,7 +190,34 @@ export class UserService {
         password: hashPassword,
       },
     ).exec();
-      
+
     return { message: "Update password successfully" };
+  }
+
+  async sendRegisterOTP(email: string) {
+    try {
+      const isExist = await this.checkExist(email);
+      if (isExist) return { message: "This email is already created" };
+
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      const otpRecord = await this.registerOtpRepository.findOne({ email }).exec();
+      if (otpRecord) {
+        otpRecord.otp = otp;
+        otpRecord.save();
+      }
+      else {
+        const newOtp = new this.registerOtpRepository({
+          email,
+          otp,
+        });
+        await newOtp.save();
+      }
+      const title = "Register your account";
+      await this.mailService.sendOtp(email, otp, title);
+      return { message: "OTP sent" };
+    }
+    catch (err) {
+      throw new ConflictException(err);
+    }
   }
 }

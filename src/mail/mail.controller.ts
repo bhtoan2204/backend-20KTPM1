@@ -4,7 +4,7 @@ import { MailService } from './mail.service';
 @Controller('mailing')
 export class MailController {
     constructor(readonly mailingService: MailService) { }
-    @Get('send-mail')
+    @Get('send-mail-test')
     public sendMail() {
         this.mailingService.sendMail();
     }

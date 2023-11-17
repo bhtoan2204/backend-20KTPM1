@@ -11,13 +11,13 @@ import { UserModule } from '../user/user.module';
 import { GoogleStrategy } from './strategies/oauth.strategy/google-plus.strategy';
 import { SessionSerializer } from 'src/utils/serializer/serializer';
 import { MongooseModule } from '@nestjs/mongoose';
-import { OtpSchema } from './schema/otp.schema';
+import { ResetOtpSchema } from './schema/resetOtp.schema';
 import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
     PassportModule,
-    MongooseModule.forFeature([{ name: 'Otp', schema: OtpSchema }]),
+    MongooseModule.forFeature([{ name: 'ResetOtp', schema: ResetOtpSchema }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

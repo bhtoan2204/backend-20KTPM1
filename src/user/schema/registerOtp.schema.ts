@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
 
-export type OtpDocument = Otp & Document;
+export type RegisterOtpDocument = RegisterOtp & Document;
 
 @Schema({
     toJSON: {
@@ -10,7 +10,7 @@ export type OtpDocument = Otp & Document;
     },
     timestamps: true,
 })
-export class Otp {
+export class RegisterOtp {
     @Prop({ required: true, unique: true })
     email: string;
 
@@ -18,4 +18,4 @@ export class Otp {
     otp: number;
 }
 
-export const OtpSchema = SchemaFactory.createForClass(Otp);
+export const RegisterOtpSchema = SchemaFactory.createForClass(RegisterOtp);
