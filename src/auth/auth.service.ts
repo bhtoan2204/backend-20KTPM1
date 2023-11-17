@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -9,13 +10,22 @@ import { JwtService } from '@nestjs/jwt';
 import { TokenPayload } from './interface/tokenPayload.interface';
 import { User } from '../user/schema/user.schema';
 import { UserService } from '../user/user.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Otp, OtpDocument } from './schema/otp.schema';
+import { Model } from 'mongoose';
+import { MailService } from 'src/mail/mail.service';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    @InjectModel(Otp.name)
+    private otpRepository: Model<OtpDocument>,
+    @Inject(MailService)
+    private readonly mailService: MailService,
 
   ) { }
 
@@ -73,5 +83,57 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  googleLogin(req) {
+    if (!req.user) {
+      return 'No user from google';
+    }
+
+    return {
+      message: 'User information from google',
+      user: req.user,
+    };
+  }
+
+  async sendOTP(email: string) {
+    try {
+      const isExist = await this.userService.checkExist(email);
+      if (!isExist) return { message: "Email not found" };
+
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      const otpRecord = await this.otpRepository.findOne({ email }).exec();
+      if (otpRecord) {
+        otpRecord.otp = otp;
+        otpRecord.save();
+      }
+      else {
+        const newOtp = new this.otpRepository({
+          email,
+          otp,
+        });
+        await newOtp.save();
+      }
+      await this.mailService.sendOtp(email, otp);
+      return { message: "OTP sent" };
+    }
+    catch (err) {
+      throw new ConflictException(err);
+    }
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const otpRecord = await this.otpRepository.findOne({ email: dto.email }).exec();
+    if (otpRecord.otp !== dto.otp) throw new ConflictException("OTP not match");
+    if (dto.password !== dto.rewrite_password) throw new ConflictException("Password and confirm password not match");
+
+    try {
+      await this.userService.updatePassword(dto.email, dto.password);
+      await this.otpRepository.deleteOne({ email: dto.email }).exec();
+      return { message: "Reset password successfully" };
+    }
+    catch (err) {
+      throw new ConflictException(err);
+    }
   }
 }
