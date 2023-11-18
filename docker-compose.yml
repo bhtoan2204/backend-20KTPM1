@@ -7,9 +7,13 @@ services:
     container_name: backend
     command: npm run start:dev
     environment:
-      - PORT=${PORT}
+      - PORT=8080
+      - DATABASE_NAME=classroom
+      - DATABASE_USER=root
+      - DATABASE_PASS=root
+      - DATABASE_URI=mongodb://database:27017
     ports:
-      - '${PORT}:${PORT}'
+      - '8080:8080'
     depends_on:
       - database
     volumes:
@@ -22,5 +26,5 @@ services:
     ports:
       - '27017:27017'
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_USERNAME: classroom
       MONGO_INITDB_ROOT_PASSWORD: root
