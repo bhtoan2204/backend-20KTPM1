@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
@@ -134,7 +135,7 @@ export class AuthService {
       return { message: "Reset password successfully" };
     }
     catch (err) {
-      throw new ConflictException(err);
+      throw new ConflictException({ err, status: HttpStatus.CONFLICT });
     }
   }
 }
