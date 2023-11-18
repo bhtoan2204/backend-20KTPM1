@@ -14,7 +14,11 @@ import { PassportModule } from '@nestjs/passport';
   imports: [
     ConfigModule.forRoot({
       validationSchema: Joi.object({
-        PORT: Joi.number().default(3000),
+        NODE_ENV: Joi.string().valid(
+          'development',
+          'production',
+        ),
+        PORT: Joi.number().default(8080),
         SESSION_SECRET: Joi.string().required(),
         JWT_EXPIRATION: Joi.number().required(),
         JWT_SECRET: Joi.string().required(),
@@ -28,7 +32,7 @@ import { PassportModule } from '@nestjs/passport';
         GOOGLE_CALLBACK_URL: Joi.string().required(),
       }),
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: `.env.${process.env.NODE_ENV}`,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
