@@ -5,8 +5,8 @@ import { RegistrationException } from './exception/registration.exception';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schema/user.schema';
 import { Model } from 'mongoose';
-import { MailService } from 'src/mail/mail.service';
-import { generateRandomPassword } from 'src/utils/generator/password.generator';
+import { MailService } from '../mail/mail.service';
+import { generateRandomPassword } from '../utils/generator/password.generator'
 import { ChangePassworDto } from './dto/changePassword.dto';
 import { RegisterOtp, RegisterOtpDocument } from './schema/registerOtp.schema';
 
