@@ -14,7 +14,7 @@ import { UserService } from '../user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { ResetOtp, ResetOtpDocument } from './schema/resetOtp.schema';
 import { Model } from 'mongoose';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../mail/mail.service';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 
 @Injectable()

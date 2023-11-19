@@ -8,7 +8,7 @@ import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { EditProfileDTO } from './dto/editProfile.dto';
 import { User } from './schema/user.schema';
 import { ChangePassworDto } from './dto/changePassword.dto';
-import { sendOTPDto } from 'src/auth/dto/sendOTP.dto';
+import { sendOTPDto } from '../auth/dto/sendOTP.dto';
 
 @ApiTags('user')
 @Controller('user')

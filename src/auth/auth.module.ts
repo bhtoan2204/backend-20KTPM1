@@ -9,10 +9,10 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
 import { UserModule } from '../user/user.module';
 import { GoogleStrategy } from './strategies/oauth.strategy/google-plus.strategy';
-import { SessionSerializer } from 'src/utils/serializer/serializer';
+import { SessionSerializer } from '../utils/serializer/serializer';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ResetOtpSchema } from './schema/resetOtp.schema';
-import { MailModule } from 'src/mail/mail.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
