@@ -220,4 +220,8 @@ export class UserService {
       throw new ConflictException(err);
     }
   }
+
+  async getUsersByIds(userIds: any): Promise<User[]> {
+    return await this.userRepository.find({ _id: { $in: userIds } });
+  }
 }

@@ -2,8 +2,9 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document, Types } from "mongoose";
 import { User } from "src/user/schema/user.schema";
 import { AbstractDocument } from "src/utils/database/abstract.schema";
+import { Class } from "./class.schema";
 
-export type ClassDocument = Class & Document;
+export type ClassUserDocument = ClassUser & Document;
 
 @Schema({
     toJSON: {
@@ -12,15 +13,15 @@ export type ClassDocument = Class & Document;
     },
     timestamps: true,
 })
-export class Class extends AbstractDocument {
-    @Prop({ required: [true, "Class Name Required"] })
-    className: string;
-
-    @Prop({ default: '' })
-    description: string;
+export class ClassUser extends AbstractDocument {
+    @Prop({ type: Types.ObjectId, ref: 'Class' })
+    class_id: Class;
 
     @Prop({ type: Types.ObjectId, ref: 'User' })
-    host: User;
+    user_id: User;
+
+    @Prop({ required: [true, "Are you a student?"] })
+    isStudent: boolean;
 }
 
-export const ClassSchema = SchemaFactory.createForClass(Class);
+export const ClassUserSchema = SchemaFactory.createForClass(ClassUser);

@@ -17,5 +17,4 @@ export class CreateClassDto {
     @IsString()
     description: string;
 
-
 }
