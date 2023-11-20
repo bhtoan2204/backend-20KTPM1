@@ -9,6 +9,7 @@ import { Invitation } from "./schema/invitation.schema";
 import { generateRandomPassword } from "src/utils/generator/password.generator";
 import { Request } from "express";
 import { UserService } from "src/user/user.service";
+import { Types } from 'mongoose';
 
 @Injectable()
 export class ClassService {
@@ -72,10 +73,9 @@ export class ClassService {
         const isInClass = this.checkInClass(host, classId);
         if (!isInClass) return { message: "You already in this class" };
         try {
-            const classUsers = await this.classUserRepository.find({ class_id: classId, isStudent: false });
+            const classUsers = await this.classUserRepository.find({ class_id: new Types.ObjectId(classId), isStudent: false });
             const userIds = classUsers.map(classUser => classUser.user_id);
             const teachers = await this.userService.getUsersByIds(userIds);
-
             return teachers;
         }
         catch (error) {
@@ -131,10 +131,12 @@ export class ClassService {
         if (!invitation) return { message: "Invitation not found" };
 
         const classUser = new this.classUserRepository({
-            class_id: classId,
-            user_id: user._id,
+            class_id: new Types.ObjectId(classId),
+            user_id: new Types.ObjectId(user._id),
             isStudent: true,
         });
+
+
         await classUser.save();
         return classUser;
     }

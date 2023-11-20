@@ -19,6 +19,7 @@ export class ClassController {
     @Post('/create')
     @ApiOperation({ summary: 'Create Class' })
     async create(@CurrentUser() host, @Body() dto: CreateClassDto) {
+
         return this.classService.create(host, dto);
     }
 

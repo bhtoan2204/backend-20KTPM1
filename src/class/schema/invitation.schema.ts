@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { AbstractDocument } from "src/utils/database/abstract.schema";
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 export type InvitationDocument = Invitation & Document;
 
@@ -12,8 +12,8 @@ export type InvitationDocument = Invitation & Document;
     timestamps: true,
 })
 export class Invitation extends AbstractDocument {
-    @Prop({ required: true, unique: true })
-    class_id: string;
+    @Prop({ type: Types.ObjectId, ref: 'Class' })
+    class_id: Types.ObjectId;
 
     @Prop({ required: true })
     class_token: string;
