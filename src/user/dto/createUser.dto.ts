@@ -39,16 +39,6 @@ export class CreateUserDto {
   @IsDateString()
   birthday: Date;
 
-  @ApiProperty({
-    description: 'Role of the user',
-    example: 'admin',
-  })
-  @IsString()
-  @IsNotEmpty({
-    message: 'Role is required',
-  })
-  role: string;
-
   @IsNumber()
   @ApiProperty({
     description: 'Your OTP',

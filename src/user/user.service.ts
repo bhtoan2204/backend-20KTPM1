@@ -34,7 +34,7 @@ export class UserService {
       const newUser = new this.userRepository({
         email: createUserDto.email,
         password: hashPassword,
-        role: createUserDto.role,
+        role: 'user',
         fullname: createUserDto.fullname,
         birthday: new Date(),
       });
@@ -83,7 +83,7 @@ export class UserService {
     }
   }
 
-  async getUserById(entryId: string) {
+  async getUserById(entryId: any) {
     return await this.userRepository.findOne({ _id: entryId })
       .select('-password')
       .select('-refreshToken')
@@ -113,7 +113,7 @@ export class UserService {
     else return false;
   }
 
-  async editProfile(_id: string, dto: any): Promise<any> {
+  async editProfile(_id: any, dto: any): Promise<any> {
     try {
       const user = await this.userRepository.findOneAndUpdate(
         { _id },
@@ -130,16 +130,16 @@ export class UserService {
     catch (err) { throw err; }
   }
 
-  async updateRefresh(id: string, refreshToken: string): Promise<any> {
+  async updateRefresh(_id: any, refreshToken: string): Promise<any> {
     try {
-      await this.userRepository.findOneAndUpdate({ id }, { refreshToken }, { new: true }).exec();
+      await this.userRepository.findOneAndUpdate({ _id }, { refreshToken }, { new: true }).exec();
     }
     catch (err) { throw err; }
   }
 
-  async softDeleteRefresh(id: string): Promise<any> {
+  async softDeleteRefresh(_id: any): Promise<any> {
     try {
-      await this.userRepository.findOneAndUpdate({ id }, { refreshToken: null }, { new: true }).exec();
+      await this.userRepository.findOneAndUpdate({ _id }, { refreshToken: null }, { new: true }).exec();
     }
     catch (err) { throw err; }
   }
@@ -160,18 +160,18 @@ export class UserService {
     }
   }
 
-  async findUserById(id: string): Promise<User> {
-    return await this.userRepository.findOne({ _id: id }).exec();
+  async findUserById(_id: any): Promise<User> {
+    return await this.userRepository.findOne({ _id }).exec();
   }
 
-  async changePassword(id: string, dto: ChangePassworDto): Promise<any> {
+  async changePassword(_id: any, dto: ChangePassworDto): Promise<any> {
     if (dto.password !== dto.rewrite_password) {
       throw new Error('New password must be different from old password');
     }
     else {
       const hashPassword = await bcrypt.hash(dto.password, 10);
       await this.userRepository.findOneAndUpdate(
-        { _id: id },
+        { _id },
         {
           password: hashPassword,
         },

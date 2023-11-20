@@ -9,6 +9,7 @@ import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handleba
 import { join } from 'path';
 import { MailModule } from './mail/mail.module';
 import { PassportModule } from '@nestjs/passport';
+import { ClassModule } from './class/class.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { PassportModule } from '@nestjs/passport';
     }),
     UserModule,
     AuthModule,
+    ClassModule,
     PassportModule.register({ session: true }),
   ],
   controllers: [],

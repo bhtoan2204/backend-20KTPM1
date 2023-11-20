@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
+import { AbstractDocument } from "src/utils/database/abstract.schema";
 
 export type ResetOtpDocument = ResetOtp & Document;
 
@@ -10,7 +11,7 @@ export type ResetOtpDocument = ResetOtp & Document;
     },
     timestamps: true,
 })
-export class ResetOtp {
+export class ResetOtp extends AbstractDocument {
     @Prop({ required: true, unique: true })
     email: string;
 

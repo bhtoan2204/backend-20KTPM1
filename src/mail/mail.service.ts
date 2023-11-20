@@ -46,28 +46,6 @@ export class MailService {
         this.mailerService.addTransporter('gmail', config);
     }
 
-    public async sendMail() {
-        await this.setTransport();
-        this.mailerService
-            .sendMail({
-                transporterName: 'gmail',
-                to: 'mjkundta@gmail.com',
-                from: 'mjkundta@gmail.com',
-                subject: 'Testing Nest MailerModule ✔',
-                template: 'action',
-                context: {
-                    name: "Toan",
-                    code: '38320',
-                },
-            })
-            .then((success) => {
-                return { message: 'success' };
-            })
-            .catch((err) => {
-                throw err;
-            });
-    }
-
     public async sendOtp(email, otp, title) {
         await this.setTransport();
         this.mailerService
