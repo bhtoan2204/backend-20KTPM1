@@ -10,7 +10,7 @@ import { MailModule } from '../mail/mail.module';
   imports: [
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     MongooseModule.forFeature([{ name: 'RegisterOtp', schema: RegisterOtpSchema }]),
-    MailModule
+    MailModule,
   ],
   controllers: [UserController],
   providers: [UserService],

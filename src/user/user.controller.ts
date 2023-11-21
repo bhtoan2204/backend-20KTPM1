@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatus, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
@@ -9,6 +9,7 @@ import { EditProfileDTO } from './dto/editProfile.dto';
 import { User } from './schema/user.schema';
 import { ChangePassworDto } from './dto/changePassword.dto';
 import { sendOTPDto } from '../auth/dto/sendOTP.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @ApiTags('user')
 @Controller('user')
@@ -27,9 +28,10 @@ export class UserController {
   @Get('/profile')
   @ApiOperation({ summary: 'Get user profile' })
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(CacheInterceptor)
   async getProfile(@Req() request) {
     const { _id } = request.user as TokenPayload;
-    return this.usersService.getUserById(_id);
+    return (await this.usersService.getUserById(_id)).toJSON();
   }
 
   @HttpCode(HttpStatus.CREATED)

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ClassController } from './class.controller';
+import { InvitationController, ClassController } from './class.controller';
 import { ClassService } from './class.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ClassSchema } from './schema/class.schema';
@@ -14,7 +14,7 @@ import { UserModule } from 'src/user/user.module';
         MongooseModule.forFeature([{ name: 'Invitation', schema: InvitationSchema }]),
         MongooseModule.forFeature([{ name: 'ClassUser', schema: ClassUserSchema }]),
     ],
-    controllers: [ClassController],
+    controllers: [ClassController, InvitationController],
     providers: [ClassService],
     exports: [ClassService],
 })

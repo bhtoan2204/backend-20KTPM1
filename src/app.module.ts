@@ -10,6 +10,8 @@ import { join } from 'path';
 import { MailModule } from './mail/mail.module';
 import { PassportModule } from '@nestjs/passport';
 import { ClassModule } from './class/class.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import { GradeModule } from './grade/grade.module';
 
 @Module({
   imports: [
@@ -56,7 +58,13 @@ import { ClassModule } from './class/class.module';
     UserModule,
     AuthModule,
     ClassModule,
+    GradeModule,
     PassportModule.register({ session: true }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 10,
+      max: 10,
+    }),
   ],
   controllers: [],
   providers: [],

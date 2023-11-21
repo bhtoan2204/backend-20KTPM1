@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import * as bcrypt from 'bcrypt';
 import { RegistrationException } from './exception/registration.exception';
@@ -79,7 +79,7 @@ export class UserService {
         throw new Error(`User not found`);
       }
     } catch (err) {
-      throw new Error(`Error finding ${err} user ${err.message}`);
+      throw new NotFoundException(err.message);
     }
   }
 
@@ -107,10 +107,9 @@ export class UserService {
     };
   }
 
-  async checkExist(email: string): Promise<boolean> {
+  async checkExist(email: string): Promise<any> {
     const user = await this.userRepository.findOne({ email }).exec();
-    if (user) return true;
-    else return false;
+    if (user) throw new HttpException('This Email is already created', HttpStatus.CONFLICT);
   }
 
   async editProfile(_id: any, dto: any): Promise<any> {
@@ -127,7 +126,9 @@ export class UserService {
       user.birthday = dto.birthday;
       return { message: "Update profile successfully" }
     }
-    catch (err) { throw err; }
+    catch (err) {
+      throw err;
+    }
   }
 
   async updateRefresh(_id: any, refreshToken: string): Promise<any> {
@@ -196,8 +197,7 @@ export class UserService {
 
   async sendRegisterOTP(email: string) {
     try {
-      const isExist = await this.checkExist(email);
-      if (isExist) return { message: "This email is already created" };
+      await this.checkExist(email);
 
       const otp = Math.floor(100000 + Math.random() * 900000);
       const otpRecord = await this.registerOtpRepository.findOne({ email }).exec();
