@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 import * as bcrypt from 'bcrypt';
 import { RegistrationException } from './exception/registration.exception';
@@ -34,7 +34,7 @@ export class UserService {
       const newUser = new this.userRepository({
         email: createUserDto.email,
         password: hashPassword,
-        role: createUserDto.role,
+        role: 'user',
         fullname: createUserDto.fullname,
         birthday: new Date(),
       });
@@ -79,11 +79,11 @@ export class UserService {
         throw new Error(`User not found`);
       }
     } catch (err) {
-      throw new Error(`Error finding ${err} user ${err.message}`);
+      throw new NotFoundException(err.message);
     }
   }
 
-  async getUserById(entryId: string) {
+  async getUserById(entryId: any) {
     return await this.userRepository.findOne({ _id: entryId })
       .select('-password')
       .select('-refreshToken')
@@ -107,13 +107,12 @@ export class UserService {
     };
   }
 
-  async checkExist(email: string): Promise<boolean> {
+  async checkExist(email: string): Promise<any> {
     const user = await this.userRepository.findOne({ email }).exec();
-    if (user) return true;
-    else return false;
+    if (user) throw new HttpException('This Email is already created', HttpStatus.CONFLICT);
   }
 
-  async editProfile(_id: string, dto: any): Promise<any> {
+  async editProfile(_id: any, dto: any): Promise<any> {
     try {
       const user = await this.userRepository.findOneAndUpdate(
         { _id },
@@ -127,19 +126,21 @@ export class UserService {
       user.birthday = dto.birthday;
       return { message: "Update profile successfully" }
     }
-    catch (err) { throw err; }
+    catch (err) {
+      throw err;
+    }
   }
 
-  async updateRefresh(id: string, refreshToken: string): Promise<any> {
+  async updateRefresh(_id: any, refreshToken: string): Promise<any> {
     try {
-      await this.userRepository.findOneAndUpdate({ id }, { refreshToken }, { new: true }).exec();
+      await this.userRepository.findOneAndUpdate({ _id }, { refreshToken }, { new: true }).exec();
     }
     catch (err) { throw err; }
   }
 
-  async softDeleteRefresh(id: string): Promise<any> {
+  async softDeleteRefresh(_id: any): Promise<any> {
     try {
-      await this.userRepository.findOneAndUpdate({ id }, { refreshToken: null }, { new: true }).exec();
+      await this.userRepository.findOneAndUpdate({ _id }, { refreshToken: null }, { new: true }).exec();
     }
     catch (err) { throw err; }
   }
@@ -160,18 +161,18 @@ export class UserService {
     }
   }
 
-  async findUserById(id: string): Promise<User> {
-    return await this.userRepository.findOne({ _id: id }).exec();
+  async findUserById(_id: any): Promise<User> {
+    return await this.userRepository.findOne({ _id }).exec();
   }
 
-  async changePassword(id: string, dto: ChangePassworDto): Promise<any> {
+  async changePassword(_id: any, dto: ChangePassworDto): Promise<any> {
     if (dto.password !== dto.rewrite_password) {
       throw new Error('New password must be different from old password');
     }
     else {
       const hashPassword = await bcrypt.hash(dto.password, 10);
       await this.userRepository.findOneAndUpdate(
-        { _id: id },
+        { _id },
         {
           password: hashPassword,
         },
@@ -196,8 +197,7 @@ export class UserService {
 
   async sendRegisterOTP(email: string) {
     try {
-      const isExist = await this.checkExist(email);
-      if (isExist) return { message: "This email is already created" };
+      await this.checkExist(email);
 
       const otp = Math.floor(100000 + Math.random() * 900000);
       const otpRecord = await this.registerOtpRepository.findOne({ email }).exec();
@@ -219,5 +219,9 @@ export class UserService {
     catch (err) {
       throw new ConflictException(err);
     }
+  }
+
+  async getUsersByIds(userIds: any): Promise<User[]> {
+    return await this.userRepository.find({ _id: { $in: userIds } });
   }
 }

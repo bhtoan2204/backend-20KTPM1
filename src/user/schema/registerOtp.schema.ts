@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
+import { AbstractDocument } from "src/utils/database/abstract.schema";
 
 export type RegisterOtpDocument = RegisterOtp & Document;
 
@@ -10,7 +11,7 @@ export type RegisterOtpDocument = RegisterOtp & Document;
     },
     timestamps: true,
 })
-export class RegisterOtp {
+export class RegisterOtp extends AbstractDocument {
     @Prop({ required: true, unique: true })
     email: string;
 
