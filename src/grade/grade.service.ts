@@ -2,9 +2,9 @@ import { HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { GradeComposition } from "./schema/gradeComposition.schema";
 import { Types } from "mongoose";
-import { User } from "src/user/schema/user.schema";
+import { User } from "../user/schema/user.schema";
 import { CreateGradeCompositionDto } from "./dto/createGradeComposition.dto";
-import { ClassService } from "src/class/class.service";
+import { ClassService } from "../class/class.service";
 
 @Injectable()
 export class GradeService {

@@ -1,8 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards, Delete, UseInterceptors, Patch } from "@nestjs/common";
 import { ApiBearerAuth, ApiParam, ApiTags } from "@nestjs/swagger";
 import { GradeService } from "./grade.service";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import { CurrentUser } from "src/auth/decorator/current-user.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CurrentUser } from "../auth/decorator/current-user.decorator";
 import { CreateGradeCompositionDto } from "./dto/createGradeComposition.dto";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 

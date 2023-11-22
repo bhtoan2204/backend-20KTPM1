@@ -5,7 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ClassSchema } from './schema/class.schema';
 import { InvitationSchema } from './schema/invitation.schema';
 import { ClassUserSchema } from './schema/classUser.schema';
-import { UserModule } from 'src/user/user.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
     imports: [
