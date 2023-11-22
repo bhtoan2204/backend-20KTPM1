@@ -10,6 +10,7 @@ import { Public } from './guards/public.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { sendOTPDto } from './dto/sendOTP.dto';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
+import { FacebookAuthGuard } from './guards/facebook-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -49,6 +50,23 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   googleAuthRedirect(@CurrentUser() currentUser: User) {
     return this.authService.login(currentUser);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Get('facebook/login')
+  @UseGuards(FacebookAuthGuard)
+  async facebookAuth(@Req() req) {
+    return { message: "facebook login successfully" }
+  }
+
+  @Get("facebook/callback")
+  @UseGuards(FacebookAuthGuard)
+  async facebookLoginRedirect(@CurrentUser() currentUser: User, @Req() req): Promise<any> {
+    return {
+      statusCode: HttpStatus.OK,
+      data: req.profile,
+    };
   }
 
   @HttpCode(HttpStatus.CREATED)

@@ -156,6 +156,7 @@ export class UserService {
         fullname: details._json.family_name + ' ' + details._json.given_name,
         avatar: details._json.picture,
         birthday: new Date(),
+        login_type: 'google',
       });
       return await newUser.save();
     }
