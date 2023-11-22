@@ -8,7 +8,7 @@ pipeline{
             agent {
                 docker {
                     image 'node:18-alpine'
-                    args '-v /tmp:/root/.cache'
+                    args '-u 0:0 -v /tmp:/root/.cache'
                 }
             }
             steps{
