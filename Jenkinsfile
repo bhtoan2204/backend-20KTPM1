@@ -8,7 +8,7 @@ pipeline{
             agent {
                 docker {
                     image 'node:alpine'
-                    args '-u root -v /tmp:/root/.cache'
+                    args '-u 0:0 -v /tmp:/root/.cache'
                 }
             }
             steps{
@@ -17,20 +17,5 @@ pipeline{
                 sh "npm run test --if-present"
             }
         }
-        
-        // stage("Build")
-        //     agent none
-        //     steps{
-        //         echo "Running Build"
-        //         sh "npm run build"
-        //     }
     }
-    // post{
-    //     success{
-    //         echo "========pipeline executed successfully ========"
-    //     }
-    //     failure{
-    //         echo "========pipeline execution failed========"
-    //     }
-    // }
 }
