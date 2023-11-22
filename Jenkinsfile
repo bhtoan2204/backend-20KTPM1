@@ -1,20 +1,22 @@
-pipeline{
-    agent none
-    environment {
-        DOCKER_IMAGE= "backend-20ktpm1-app"
-    }
-    stages{
-        stage("Test"){
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    args '-u root -v /tmp:/root/.cache'
+pipeline {
+    agent any
+    stages {
+        stage("Test") {
+            steps {
+                script {
+                    // Clean workspace
+                    deleteDir()
+
+                    // Clone the repository
+                    checkout scm
+
+                    // Assuming your code is in a directory named 'app'
+                    dir('app') {
+                        echo "Running Test..."
+                        sh "npm install"
+                        sh "npm run test --if-present"
+                    }
                 }
-            }
-            steps{
-                echo "Running Test..."
-                sh "npm install"
-                sh "npm run test --if-present"
             }
         }
     }
