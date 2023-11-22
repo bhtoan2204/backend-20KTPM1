@@ -7,7 +7,7 @@ pipeline{
         stage("Test"){
             agent {
                 docker {
-                    image 'node:alpine'
+                    image 'node:18-alpine'
                     args '-u 0:0 -v /tmp:/root/.cache'
                 }
             }
