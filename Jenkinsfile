@@ -5,8 +5,16 @@ pipeline{
     }
     stages{
         stage("Test"){
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-v /tmp:/root/.cache'
+                }
+            }
             steps{
                 echo "Running Test..."
+                sh "npm install"
+                sh "npm run test --if-present"
             }
         }
     }
