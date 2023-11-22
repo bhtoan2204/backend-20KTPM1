@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { AbstractDocument } from "src/utils/database/abstract.schema";
+import { AbstractDocument } from "../../utils/database/abstract.schema";
 import { Document, Types } from "mongoose";
 
 export type InvitationDocument = Invitation & Document;

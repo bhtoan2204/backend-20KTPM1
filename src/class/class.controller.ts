@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Req, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { ClassService } from "./class.service";
-import { CurrentUser } from "src/auth/decorator/current-user.decorator";
+import { CurrentUser } from "../auth/decorator/current-user.decorator";
 import { CreateClassDto } from "./dto/createClass.dto";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { Request } from "express";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 

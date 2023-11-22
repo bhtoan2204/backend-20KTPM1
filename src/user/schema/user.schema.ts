@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, SchemaTypes, Types } from "mongoose";
-import { Class } from "src/class/schema/class.schema";
-import { AbstractDocument } from "src/utils/database/abstract.schema";
+import { Document } from "mongoose";
+import { AbstractDocument } from "../../utils/database/abstract.schema";
 
 export enum Role {
     ADMIN = 'admin',
