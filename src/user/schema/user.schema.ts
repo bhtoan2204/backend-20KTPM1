@@ -2,9 +2,15 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document } from "mongoose";
 import { AbstractDocument } from "../../utils/database/abstract.schema";
 
-export enum Role {
+enum Role {
     ADMIN = 'admin',
     USER = 'user',
+}
+
+enum LoginType {
+    GOOGLE = 'google',
+    FACEBOOK = 'facebook',
+    LOCAL = 'local',
 }
 
 export type UserDocument = User & Document;
@@ -37,6 +43,9 @@ export class User extends AbstractDocument {
 
     @Prop({ default: null })
     refreshToken: string;
+
+    @Prop({ default: 'local', type: String, enum: LoginType })
+    login_type: string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

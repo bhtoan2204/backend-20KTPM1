@@ -13,6 +13,7 @@ import { SessionSerializer } from '../utils/serializer/serializer';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ResetOtpSchema } from './schema/resetOtp.schema';
 import { MailModule } from '../mail/mail.module';
+import { FacebookStrategy } from './strategies/oauth.strategy/facebook.strategy';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { MailModule } from '../mail/mail.module';
     UserModule,
     MailModule,
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, GoogleStrategy, SessionSerializer],
+  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, GoogleStrategy, SessionSerializer, FacebookStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })
