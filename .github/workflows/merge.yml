@@ -1,0 +1,40 @@
+name: Auto Merge
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  merge-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Create Pull Request and Auto Merge
+        run: |
+          CURRENT_BRANCH=$(git branch --show-current)
+          
+          if [ "$CURRENT_BRANCH" != "main" ] && [ "$CURRENT_BRANCH" != "dev" ]; then
+            git checkout -b auto-merge/$CURRENT_BRANCH
+            git add .
+            git commit -m "Auto merge $CURRENT_BRANCH into dev"
+            git push origin auto-merge/$CURRENT_BRANCH
+
+            # Create Pull Request
+            TITLE="Auto merge $CURRENT_BRANCH into dev"
+            BODY="Automatically created pull request to merge $CURRENT_BRANCH into dev."
+            PR_URL=$(curl -s -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -d '{"title":"'"$TITLE"'","body":"'"$BODY"'","head":"auto-merge/'"$CURRENT_BRANCH"'","base":"dev"}' "https://api.github.com/repos/${{ github.repository }}/pulls" | jq -r '.html_url')
+
+            echo "Pull Request created: $PR_URL"
+
+            # Auto merge Pull Request
+            curl -s -X PUT -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -d '{"merge_method":"merge"}' "https://api.github.com/repos/${{ github.repository }}/pulls/$(echo $PR_URL | awk -F'/' '{print $NF}')/merge"
+          fi
