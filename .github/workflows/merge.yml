@@ -23,7 +23,7 @@ jobs:
         id: create_pr
         uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ACCESS_TOKEN_GITHUB }}
           branch: dev
           title: "Auto-merge changes"
           body: "Automatically created pull request for changes in branch ${{ github.event.ref }}"
