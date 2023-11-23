@@ -1,43 +1,38 @@
-name: Auto Merge and Delete Branch
+name: Auto Merge Branch
 
 on:
   push:
     branches:
       - '*'
+      - '!main'
+      - '!dev'
+  pull_request:
+    types:
+      - opened
+      - synchronize
 
 jobs:
-  merge-job:
+  auto_merge:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Set up Git
-        run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+      - name: Create Pull Request
+        id: create_pr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.ACCESS_TOKEN_GITHUB }}
+          branch: dev
+          title: "Auto-merge changes"
+          body: "Automatically created pull request for changes in branch ${{ github.event.ref }}"
+          labels: "auto-merge"
 
-      - name: Create Pull Request and Auto Merge
-        run: |
-          CURRENT_BRANCH=$(git branch --show-current)
-          
-          if [ "$CURRENT_BRANCH" != "main" ] && [ "$CURRENT_BRANCH" != "dev" ]; then
-            git checkout -b auto-merge/$CURRENT_BRANCH
-            git add .
-            git commit -m "Auto merge $CURRENT_BRANCH into dev"
-            git push origin auto-merge/$CURRENT_BRANCH
+      - name: Merge Pull Request
+        if: steps.create_pr.outputs.pull-request-number
+        run: gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --auto
 
-            # Create Pull Request
-            TITLE="Auto merge $CURRENT_BRANCH into dev"
-            BODY="Automatically created pull request to merge $CURRENT_BRANCH into dev."
-            PR_URL=$(curl -s -X POST -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN_GITHUB }}" -d '{"title":"'"$TITLE"'","body":"'"$BODY"'","head":"auto-merge/'"$CURRENT_BRANCH"'","base":"dev"}' "https://api.github.com/repos/${{ github.repository }}/pulls" | jq -r '.html_url')
-
-            echo "Pull Request created: $PR_URL"
-
-            # Auto merge Pull Request
-            curl -s -X PUT -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN_GITHUB }}" -d '{"merge_method":"merge"}' "https://api.github.com/repos/${{ github.repository }}/pulls/$(echo $PR_URL | awk -F'/' '{print $NF}')/merge"
-
-            # Delete branch
-            git push origin --delete $CURRENT_BRANCH
-          fi
+      - name: Delete Branch
+        if: success() && steps.create_pr.outputs.pull-request-number
+        run: gh pr close ${{ steps.create_pr.outputs.pull-request-number }} --delete-branch
