@@ -1,4 +1,4 @@
-name: Auto Merge
+name: Auto Merge and Delete Branch
 
 on:
   push:
@@ -37,4 +37,7 @@ jobs:
 
             # Auto merge Pull Request
             curl -s -X PUT -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN_GITHUB }}" -d '{"merge_method":"merge"}' "https://api.github.com/repos/${{ github.repository }}/pulls/$(echo $PR_URL | awk -F'/' '{print $NF}')/merge"
+
+            # Delete branch
+            git push origin --delete $CURRENT_BRANCH
           fi
