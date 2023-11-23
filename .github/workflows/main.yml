@@ -30,6 +30,9 @@ jobs:
         with:
           node-version: '18.17.1'
 
+      - name: Install NestJS CLI
+        run: npm install -g @nestjs/cli
+
       - name: Build
         run: npm run build --if-present
 
