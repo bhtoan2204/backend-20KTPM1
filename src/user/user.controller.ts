@@ -54,4 +54,10 @@ export class UserController {
   async sendRegisterOTP(@Body() dto: sendOTPDto) {
     return this.usersService.sendRegisterOTP(dto.email);
   }
+
+  @HttpCode(HttpStatus.OK)
+  @Get('hello')
+  getHello() {
+    return 'hello';
+  }
 }
