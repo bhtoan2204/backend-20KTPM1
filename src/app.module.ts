@@ -12,6 +12,8 @@ import { PassportModule } from '@nestjs/passport';
 import { ClassModule } from './class/class.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { GradeModule } from './grade/grade.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -66,7 +68,7 @@ import { GradeModule } from './grade/grade.module';
       max: 10,
     }),
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule { }
