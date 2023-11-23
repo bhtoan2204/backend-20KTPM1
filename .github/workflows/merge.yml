@@ -31,10 +31,10 @@ jobs:
             # Create Pull Request
             TITLE="Auto merge $CURRENT_BRANCH into dev"
             BODY="Automatically created pull request to merge $CURRENT_BRANCH into dev."
-            PR_URL=$(curl -s -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -d '{"title":"'"$TITLE"'","body":"'"$BODY"'","head":"auto-merge/'"$CURRENT_BRANCH"'","base":"dev"}' "https://api.github.com/repos/${{ github.repository }}/pulls" | jq -r '.html_url')
+            PR_URL=$(curl -s -X POST -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN_GITHUB }}" -d '{"title":"'"$TITLE"'","body":"'"$BODY"'","head":"auto-merge/'"$CURRENT_BRANCH"'","base":"dev"}' "https://api.github.com/repos/${{ github.repository }}/pulls" | jq -r '.html_url')
 
             echo "Pull Request created: $PR_URL"
 
             # Auto merge Pull Request
-            curl -s -X PUT -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -d '{"merge_method":"merge"}' "https://api.github.com/repos/${{ github.repository }}/pulls/$(echo $PR_URL | awk -F'/' '{print $NF}')/merge"
+            curl -s -X PUT -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN_GITHUB }}" -d '{"merge_method":"merge"}' "https://api.github.com/repos/${{ github.repository }}/pulls/$(echo $PR_URL | awk -F'/' '{print $NF}')/merge"
           fi
