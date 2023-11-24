@@ -6,7 +6,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schema/user.schema';
 import { Model } from 'mongoose';
 import { MailService } from '../mail/mail.service';
-import { generateRandomPassword } from '../utils/generator/password.generator'
 import { ChangePassworDto } from './dto/changePassword.dto';
 import { RegisterOtp, RegisterOtpDocument } from './schema/registerOtp.schema';
 
@@ -37,6 +36,7 @@ export class UserService {
         role: 'user',
         fullname: createUserDto.fullname,
         birthday: new Date(),
+        login_type: 'local',
       });
 
       await newUser.save();
@@ -58,7 +58,7 @@ export class UserService {
   async validateCreateUser(email: string) {
     let checkEmailUser: User;
     try {
-      checkEmailUser = await this.userRepository.findOne({ email }).exec();
+      checkEmailUser = await this.userRepository.findOne({ email, login_type: 'local' }).exec();
     } catch (err) {
       throw new RegistrationException(err.message, err.http_code || 500, false);
     }
@@ -94,8 +94,8 @@ export class UserService {
       .exec();
   }
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userRepository.findOne({ email }).exec();
+  async validateLocalUser(email: string, password: string): Promise<any> {
+    const user = await this.userRepository.findOne({ email, login_type: 'local' }).exec();
     if (!user) {
       throw new UnauthorizedException('Credentials are not valid.');
     }
@@ -111,6 +111,12 @@ export class UserService {
     const user = await this.userRepository.findOne({ email }).exec();
     if (user) throw new HttpException('This Email is already created', HttpStatus.CONFLICT);
   }
+
+  async checkExistLocal(email): Promise<any> {
+    const user = await this.userRepository.findOne({ email, login_type: 'local' }).exec();
+    if (user) throw new HttpException('This Email is already created', HttpStatus.CONFLICT);
+  }
+
 
   async editProfile(_id: any, dto: any): Promise<any> {
     try {
@@ -146,17 +152,45 @@ export class UserService {
   }
 
   async validateGoogleUser(details: any) {
-    const user = await this.userRepository.findOne({ email: details._json.email }).exec();
-    if (user) return user;
+    const user = await this.userRepository.findOne({
+      email: details._json.email,
+      login_type: 'google'
+    }).exec();
+
+    if (user)
+      return user;
     else {
       const newUser = new this.userRepository({
         email: details._json.email,
-        password: generateRandomPassword(60),
+        password: '',
         role: 'user',
         fullname: details._json.family_name + ' ' + details._json.given_name,
         avatar: details._json.picture,
         birthday: new Date(),
         login_type: 'google',
+      });
+      return await newUser.save();
+    }
+  }
+
+  async validateFacebookUser(details: any) {
+    const user = await this.userRepository.findOne({
+      email: details._json.email,
+      login_type: 'facebook'
+    }).exec();
+
+    console.log(details._json);
+
+    if (user) return user;
+    else {
+      const newUser = new this.userRepository({
+        email: details._json.email,
+        password: '',
+        role: 'user',
+        fullname: details._json.first_name + ' ' + details._json.last_name,
+        avatar: `https://graph.facebook.com/${details._json.id}/picture?type=large`,
+        birthday: new Date(),
+        login_type: 'facebook',
       });
       return await newUser.save();
     }
@@ -198,8 +232,7 @@ export class UserService {
 
   async sendRegisterOTP(email: string) {
     try {
-      await this.checkExist(email);
-
+      await this.checkExistLocal(email);
       const otp = Math.floor(100000 + Math.random() * 900000);
       const otpRecord = await this.registerOtpRepository.findOne({ email }).exec();
       if (otpRecord) {

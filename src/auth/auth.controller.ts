@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Req, Body, HttpCode, HttpStatus, Get } from '@nestjs/common';
+import { Controller, Post, UseGuards, Req, Body, HttpCode, HttpStatus, Get, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -11,17 +11,21 @@ import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { sendOTPDto } from './dto/sendOTP.dto';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { FacebookAuthGuard } from './guards/facebook-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('auth')
 @Controller('auth')
 @ApiBearerAuth()
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService
+  ) { }
 
   @HttpCode(HttpStatus.OK)
   @Public()
   @UseGuards(LocalAuthGuard)
-  @Post('login')
+  @Post('local/login')
   async login(
     @Body() dto: LoginDto,
     @CurrentUser() currentUser: User,
@@ -48,8 +52,9 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  googleAuthRedirect(@CurrentUser() currentUser: User) {
-    return this.authService.login(currentUser);
+  async googleAuthRedirect(@CurrentUser() currentUser: User, @Res() res): Promise<any> {
+    const { accessToken, refreshToken } = await this.authService.login(currentUser);
+    return res.redirect(`${this.configService.get<string>('FRONTEND_URL')}/auth/google/callback?accessToken=${accessToken}&refreshToken=${refreshToken}`);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -62,11 +67,9 @@ export class AuthController {
 
   @Get("facebook/callback")
   @UseGuards(FacebookAuthGuard)
-  async facebookLoginRedirect(@CurrentUser() currentUser: User, @Req() req): Promise<any> {
-    return {
-      statusCode: HttpStatus.OK,
-      data: req.profile,
-    };
+  async facebookLoginRedirect(@CurrentUser() currentUser: User, @Res() res): Promise<any> {
+    const { accessToken, refreshToken } = await this.authService.login(currentUser);
+    return res.redirect(`${this.configService.get<string>('FRONTEND_URL')}/auth/google/callback?accessToken=${accessToken}&refreshToken=${refreshToken}`);
   }
 
   @HttpCode(HttpStatus.CREATED)
