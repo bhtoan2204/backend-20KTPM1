@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
-import { UserService } from './user.service';
+import { UserService } from './service/user.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserSchema } from './schema/user.schema';
 import { RegisterOtpSchema } from './schema/registerOtp.schema';
 import { MailModule } from '../mail/mail.module';
+import { StorageService } from './service/storage.service';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { MailModule } from '../mail/mail.module';
     MailModule,
   ],
   controllers: [UserController],
-  providers: [UserService],
-  exports: [UserService],
+  providers: [UserService, StorageService],
+  exports: [UserService, StorageService],
 })
 export class UserModule { }

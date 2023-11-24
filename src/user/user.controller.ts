@@ -1,5 +1,5 @@
-import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatus, UseInterceptors } from '@nestjs/common';
-import { UserService } from './user.service';
+import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatus, UseInterceptors, UploadedFile, Header, Res, Query } from '@nestjs/common';
+import { UserService } from './service/user.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -10,12 +10,17 @@ import { User } from './schema/user.schema';
 import { ChangePassworDto } from './dto/changePassword.dto';
 import { sendOTPDto } from '../auth/dto/sendOTP.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { StorageService } from './service/storage.service';
 
 @ApiTags('user')
 @Controller('user')
 @ApiBearerAuth()
 export class UserController {
-  constructor(private readonly usersService: UserService) { }
+  constructor(
+    private readonly usersService: UserService,
+    private readonly storageService: StorageService
+  ) { }
 
   @HttpCode(HttpStatus.CREATED)
   @Post('/signup')
@@ -41,6 +46,24 @@ export class UserController {
     const { _id } = user;
     return this.usersService.editProfile(_id, dto);
   }
+
+  @HttpCode(HttpStatus.CREATED)
+  @Patch('/upload_avatar')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('avatar'))
+  async uploadAvatar(@CurrentUser() user: User, @UploadedFile() file: Express.Multer.File) {
+    const { _id } = user;
+    const fileName = await this.storageService.uploadImage(file);
+    return this.usersService.uploadAvatar(_id, fileName);
+  }
+
+  @Get('/get_avatar')
+  @Header('Content-Type', 'image/webp')
+  async readImage(@Res() res, @Query('filename') filename) {
+    const data = await this.storageService.readStream(filename);
+    return data.pipe(res);
+  }
+
 
   @Patch('/change_password')
   @UseGuards(JwtAuthGuard)

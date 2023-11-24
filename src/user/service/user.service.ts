@@ -1,13 +1,14 @@
 import { ConflictException, HttpException, HttpStatus, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { CreateUserDto } from './dto/createUser.dto';
+import { CreateUserDto } from '../dto/createUser.dto';
 import * as bcrypt from 'bcrypt';
-import { RegistrationException } from './exception/registration.exception';
+import { RegistrationException } from '../exception/registration.exception';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from './schema/user.schema';
+import { User, UserDocument } from '../schema/user.schema';
 import { Model } from 'mongoose';
-import { MailService } from '../mail/mail.service';
-import { ChangePassworDto } from './dto/changePassword.dto';
-import { RegisterOtp, RegisterOtpDocument } from './schema/registerOtp.schema';
+import { MailService } from '../../mail/mail.service';
+import { ChangePassworDto } from '../dto/changePassword.dto';
+import { RegisterOtp, RegisterOtpDocument } from '../schema/registerOtp.schema';
+import * as Storage from 'azure-storage'
 
 @Injectable()
 export class UserService {
@@ -131,6 +132,22 @@ export class UserService {
       user.fullname = dto.fullname;
       user.birthday = dto.birthday;
       return { message: "Update profile successfully" }
+    }
+    catch (err) {
+      throw err;
+    }
+  }
+
+  async uploadAvatar(_id: any, fileName: string): Promise<any> {
+    try {
+      await this.userRepository.findOneAndUpdate({ _id }, {
+        avatar: `https://storageclassroom.blob.core.windows.net/upload-file/${fileName}`,
+      }, { new: true }).exec();
+
+      return {
+        message: "Upload avatar successfully",
+        avatar: `https://storageclassroom.blob.core.windows.net/upload-file/${fileName}`
+      };
     }
     catch (err) {
       throw err;

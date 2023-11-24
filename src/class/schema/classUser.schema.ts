@@ -20,6 +20,9 @@ export class ClassUser extends AbstractDocument {
 
     @Prop({ required: [true, "Are you a student?"] })
     isStudent: boolean;
+
+    @Prop({ default: null })
+    student_id: string;
 }
 
 export const ClassUserSchema = SchemaFactory.createForClass(ClassUser);

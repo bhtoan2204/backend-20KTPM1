@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { TokenPayload } from './interface/tokenPayload.interface';
 import { User } from '../user/schema/user.schema';
-import { UserService } from '../user/user.service';
+import { UserService } from '../user/service/user.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { ResetOtp, ResetOtpDocument } from './schema/resetOtp.schema';
 import { Model } from 'mongoose';

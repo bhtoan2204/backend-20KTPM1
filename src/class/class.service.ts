@@ -8,7 +8,7 @@ import { ClassUser } from "./schema/classUser.schema";
 import { Invitation } from "./schema/invitation.schema";
 import { generateRandomPassword } from "../utils/generator/password.generator";
 import { Request } from "express";
-import { UserService } from "../user/user.service";
+import { UserService } from "../user/service/user.service";
 import { Types } from 'mongoose';
 
 @Injectable()

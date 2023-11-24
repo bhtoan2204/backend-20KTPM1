@@ -5,6 +5,10 @@ import { Types } from "mongoose";
 import { User } from "../user/schema/user.schema";
 import { CreateGradeCompositionDto } from "./dto/createGradeComposition.dto";
 import { ClassService } from "../class/class.service";
+import { Response } from 'express';
+import * as fs from 'fs';
+import * as fastcsv from 'fast-csv';
+
 
 @Injectable()
 export class GradeService {
@@ -77,5 +81,9 @@ export class GradeService {
             .exec();
 
         return gradeComposition;
+    }
+
+    async downloadListStudentCsv(user: User, classId: string, res: Response) {
+        
     }
 }
