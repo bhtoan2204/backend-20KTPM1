@@ -65,6 +65,5 @@ export class GradeCompositionController {
         return this.gradeService.getDescendingGradeCompositions(user, params.classId);
     }
 
-
 }
 
