@@ -18,7 +18,6 @@ import { FacebookStrategy } from './strategies/oauth.strategy/facebook.strategy'
 @Module({
   imports: [
     PassportModule,
-    MongooseModule.forFeature([{ name: 'ResetOtp', schema: ResetOtpSchema }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -30,7 +29,6 @@ import { FacebookStrategy } from './strategies/oauth.strategy/facebook.strategy'
       inject: [ConfigService],
     }),
     UserModule,
-    MailModule,
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, GoogleStrategy, SessionSerializer, FacebookStrategy],
   controllers: [AuthController],

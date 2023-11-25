@@ -1,21 +1,17 @@
 import { ConflictException, HttpException, HttpStatus, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Class } from "./schema/class.schema";
+import { Class } from "../schema/class.schema";
 import { Model } from "mongoose";
-import { User } from "../user/schema/user.schema";
-import { CreateClassDto } from "./dto/createClass.dto";
-import { ClassUser } from "./schema/classUser.schema";
-import { Invitation } from "./schema/invitation.schema";
-import { generateRandomPassword } from "../utils/generator/password.generator";
-import { Request } from "express";
-import { UserService } from "../user/service/user.service";
+import { CreateClassDto } from "../dto/createClass.dto";
+import { ClassUser } from "../schema/classUser.schema";
 import { Types } from 'mongoose';
+import { UserService } from "src/user/service/user.service";
+import { User } from "src/user/schema/user.schema";
 
 @Injectable()
 export class ClassService {
     constructor(
         @InjectModel(Class.name) private readonly classRepository: Model<Class>,
-        @InjectModel(Invitation.name) private readonly invitationRepository: Model<Invitation>,
         @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUser>,
         @Inject(UserService) private readonly userService: UserService,
     ) { }
@@ -113,57 +109,5 @@ export class ClassService {
         catch (error) {
             return { message: `Error: ${error.message}` };
         }
-    }
-
-    async getInvitations(user: User, classId: string, req: Request): Promise<any> {
-        this.checkIsHost(user, classId);
-
-        const existingInvitation = await this.invitationRepository.findOne({ class_id: classId });
-
-        if (existingInvitation) {
-            return {
-                existingInvitation
-            };
-        }
-
-        const newInvitation = new this.invitationRepository({
-            class_id: classId,
-            class_token: generateRandomPassword(8), // 8 characters
-        });
-
-        await newInvitation.save();
-
-        return {
-            newInvitation
-        };
-    }
-
-    async joinClassAsStudent(user: User, classToken: string, classId: string): Promise<any> {
-        this.checkInClass(user, classId);
-
-        const invitation = await this.invitationRepository.findOne({ class_id: classId, class_token: classToken }).exec();
-
-        if (!invitation) return new NotFoundException("Invitation not found");
-
-        const classUser = new this.classUserRepository({
-            class_id: new Types.ObjectId(classId),
-            user_id: new Types.ObjectId(user._id),
-            isStudent: true,
-        });
-
-
-        await classUser.save();
-        return classUser;
-    }
-
-    async getJoinedClasses(user: User): Promise<any> {
-        const classUsers = await this.classUserRepository.find({ user_id: user._id, isStudent: true })
-            .select('class_id')
-            .exec();
-        const classIds = classUsers.map(classUser => classUser.class_id);
-        const classes = await this.classRepository.find({ _id: { $in: classIds } })
-            .select('_id className description')
-            .exec();
-        return classes;
     }
 }

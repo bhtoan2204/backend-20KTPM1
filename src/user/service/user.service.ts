@@ -8,7 +8,8 @@ import { Model } from 'mongoose';
 import { MailService } from '../../mail/mail.service';
 import { ChangePassworDto } from '../dto/changePassword.dto';
 import { RegisterOtp, RegisterOtpDocument } from '../schema/registerOtp.schema';
-import * as Storage from 'azure-storage'
+import { ResetOtp, ResetOtpDocument } from '../schema/resetOtp.schema';
+import { ResetPasswordDto } from '../dto/resetPassword.dto';
 
 @Injectable()
 export class UserService {
@@ -17,6 +18,8 @@ export class UserService {
     private userRepository: Model<UserDocument>,
     @InjectModel(RegisterOtp.name)
     private registerOtpRepository: Model<RegisterOtpDocument>,
+    @InjectModel(ResetOtp.name)
+    private resetOtpRepository: Model<ResetOtpDocument>,
     @Inject(MailService)
     private readonly mailService: MailService,
   ) { }
@@ -34,7 +37,7 @@ export class UserService {
       const newUser = new this.userRepository({
         email: createUserDto.email,
         password: hashPassword,
-        role: 'user',
+        role: 'null',
         fullname: createUserDto.fullname,
         birthday: new Date(),
         login_type: 'local',
@@ -180,7 +183,7 @@ export class UserService {
       const newUser = new this.userRepository({
         email: details._json.email,
         password: '',
-        role: 'user',
+        role: 'null',
         fullname: details._json.family_name + ' ' + details._json.given_name,
         avatar: details._json.picture,
         birthday: new Date(),
@@ -196,14 +199,12 @@ export class UserService {
       login_type: 'facebook'
     }).exec();
 
-    console.log(details._json);
-
     if (user) return user;
     else {
       const newUser = new this.userRepository({
         email: details._json.email,
         password: '',
-        role: 'user',
+        role: 'null',
         fullname: details._json.first_name + ' ' + details._json.last_name,
         avatar: `https://graph.facebook.com/${details._json.id}/picture?type=large`,
         birthday: new Date(),
@@ -274,5 +275,51 @@ export class UserService {
 
   async getUsersByIds(userIds: any): Promise<User[]> {
     return await this.userRepository.find({ _id: { $in: userIds } });
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await this.userRepository.find();
+  }
+
+  async sendResetOTP(email: string) {
+    try {
+      const isExist = await this.checkExist(email);
+      if (!isExist) return { message: "Email not found" };
+
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      const otpRecord = await this.resetOtpRepository.findOne({ email }).exec();
+      if (otpRecord) {
+        otpRecord.otp = otp;
+        otpRecord.save();
+      }
+      else {
+        const newOtp = new this.resetOtpRepository({
+          email,
+          otp,
+        });
+        await newOtp.save();
+      }
+      const title = "Reset your password";
+      await this.mailService.sendOtp(email, otp, title);
+      return { message: "OTP sent" };
+    }
+    catch (err) {
+      throw new ConflictException(err);
+    }
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const otpRecord = await this.resetOtpRepository.findOne({ email: dto.email }).exec();
+    if (otpRecord.otp !== dto.otp) throw new ConflictException("OTP not match");
+    if (dto.password !== dto.rewrite_password) throw new ConflictException("Password and confirm password not match");
+
+    try {
+      await this.updatePassword(dto.email, dto.password);
+      await this.resetOtpRepository.deleteOne({ email: dto.email }).exec();
+      return { message: "Reset password successfully" };
+    }
+    catch (err) {
+      throw new ConflictException({ err, status: HttpStatus.CONFLICT });
+    }
   }
 }

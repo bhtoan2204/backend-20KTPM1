@@ -25,7 +25,6 @@ export class FacebookStrategy extends PassportStrategy(Strategy, "facebook") {
         refreshToken: string,
         profile: Profile,
     ): Promise<any> {
-        console.log(accessToken)
         try {
             return this.userService.validateFacebookUser(profile);
         }

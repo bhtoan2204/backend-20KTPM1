@@ -1,0 +1,35 @@
+import { Controller, Get, HttpCode, HttpStatus, Param, Req, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam } from "@nestjs/swagger";
+import { JwtAuthGuard } from "src/auth/guards/AuthGuard/jwt-auth.guard";
+import { CurrentUser } from "src/auth/decorator/current-user.decorator";
+import { Request } from "express";
+import { InvitationService } from "../service/invitation.service";
+
+@ApiTags('invitation')
+@Controller('invitation')
+@ApiBearerAuth()
+export class InvitationController {
+    constructor(
+        private readonly invitationService: InvitationService
+    ) { }
+
+    @HttpCode(HttpStatus.CREATED)
+    @UseGuards(JwtAuthGuard)
+    @Get('/:classId')
+    @ApiOperation({ summary: 'Get invitations of class' })
+    @ApiParam({ name: 'classId', type: String })
+    async getInvitations(@CurrentUser() user, @Param() params: any, @Req() req: Request) {
+        return this.invitationService.getInvitations(user, params.classId, req);
+    }
+
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(JwtAuthGuard)
+    @Get('/join/:classToken/:classId')
+    @ApiOperation({ summary: 'Join class' })
+    @ApiParam({ name: 'classToken', type: String })
+    @ApiParam({ name: 'classId', type: String })
+    async joinClass(@CurrentUser() user, @Param() params: any) {
+        return this.invitationService.joinClassAsTeacher(user, params.classToken, params.classId);
+    }
+
+}

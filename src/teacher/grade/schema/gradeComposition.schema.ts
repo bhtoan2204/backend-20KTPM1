@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document, Types } from "mongoose";
-import { AbstractDocument } from "../../utils/database/abstract.schema";
+import { AbstractDocument } from "src/utils/database/abstract.schema";
 
 export type GradeCompositionDocument = GradeComposition & Document;
 
@@ -20,6 +20,9 @@ export class GradeComposition extends AbstractDocument {
 
     @Prop({ required: [true, "Grade Composition Scale Required"] })
     gradeCompo_scale: number;
+
+    @Prop({ default: false })
+    is_finalized: boolean;
 }
 
 export const GradeCompositionSchema = SchemaFactory.createForClass(GradeComposition);

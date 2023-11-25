@@ -1,16 +1,14 @@
 import { Controller, Post, UseGuards, Req, Body, HttpCode, HttpStatus, Get, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+import { LocalAuthGuard } from './guards/AuthGuard/local-auth.guard';
+import { JwtRefreshGuard } from './guards/AuthGuard/jwt-refresh.guard';
 import { CurrentUser } from './decorator/current-user.decorator';
 import { LoginDto } from './dto/login.dto';
 import { User } from '../user/schema/user.schema';
-import { Public } from './guards/public.guard';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { sendOTPDto } from './dto/sendOTP.dto';
-import { ResetPasswordDto } from './dto/resetPassword.dto';
-import { FacebookAuthGuard } from './guards/facebook-auth.guard';
+import { Public } from './guards/AuthGuard/public.guard';
+import { GoogleAuthGuard } from './guards/AuthGuard/google-auth.guard';
+import { FacebookAuthGuard } from './guards/AuthGuard/facebook-auth.guard';
 import { ConfigService } from '@nestjs/config';
 
 @ApiTags('auth')
@@ -70,19 +68,5 @@ export class AuthController {
   async facebookLoginRedirect(@CurrentUser() currentUser: User, @Res() res): Promise<any> {
     const { accessToken, refreshToken } = await this.authService.login(currentUser);
     return res.redirect(`${this.configService.get<string>('FRONTEND_URL')}/auth/google/callback?accessToken=${accessToken}&refreshToken=${refreshToken}`);
-  }
-
-  @HttpCode(HttpStatus.CREATED)
-  @Public()
-  @Post('send_resetOtp')
-  async sendOTP(@Body() dto: sendOTPDto) {
-    return this.authService.sendOTP(dto.email);
-  }
-
-  @HttpCode(HttpStatus.CREATED)
-  @Public()
-  @Post('reset_password')
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
   }
 }

@@ -1,11 +1,10 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Req, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
-import { ClassService } from "./class.service";
-import { CurrentUser } from "../auth/decorator/current-user.decorator";
-import { CreateClassDto } from "./dto/createClass.dto";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { Request } from "express";
+import { ClassService } from "../service/class.service";
+import { CreateClassDto } from "../dto/createClass.dto";
 import { CacheInterceptor } from "@nestjs/cache-manager";
+import { JwtAuthGuard } from "src/auth/guards/AuthGuard/jwt-auth.guard";
+import { CurrentUser } from "src/auth/decorator/current-user.decorator";
 
 @ApiTags('class')
 @Controller('class')
@@ -43,7 +42,7 @@ export class ClassController {
 
     @UseGuards(JwtAuthGuard)
     @Delete('/:classId')
-    @ApiOperation({ summary: 'Get class detail' })
+    @ApiOperation({ summary: 'Delete class' })
     @ApiParam({ name: 'classId', type: String })
     async deleteClass(@CurrentUser() host, @Param() params: any) {
         return this.classService.deleteClass(host, params.classId);
@@ -67,43 +66,5 @@ export class ClassController {
     @ApiParam({ name: 'classId', type: String })
     async getStudents(@CurrentUser() user, @Param() params: any) {
         return this.classService.getStudents(user, params.classId);
-    }
-
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtAuthGuard)
-    @UseInterceptors(CacheInterceptor)
-    @Get('/getJoinedClasses')
-    @ApiOperation({ summary: 'Get joined classes' })
-    async getJoinedClasses(@CurrentUser() user) {
-        return this.classService.getJoinedClasses(user);
-    }
-}
-
-
-@ApiTags('invitation')
-@Controller('invitation')
-@ApiBearerAuth()
-export class InvitationController {
-    constructor(
-        private readonly classService: ClassService
-    ) { }
-
-    @HttpCode(HttpStatus.CREATED)
-    @UseGuards(JwtAuthGuard)
-    @Get('/:classId')
-    @ApiOperation({ summary: 'Get invitations of class' })
-    @ApiParam({ name: 'classId', type: String })
-    async getInvitations(@CurrentUser() user, @Param() params: any, @Req() req: Request) {
-        return this.classService.getInvitations(user, params.classId, req);
-    }
-
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtAuthGuard)
-    @Get('/join/:classToken/:classId')
-    @ApiOperation({ summary: 'Join class' })
-    @ApiParam({ name: 'classToken', type: String })
-    @ApiParam({ name: 'classId', type: String })
-    async joinClass(@CurrentUser() user, @Param() params: any) {
-        return this.classService.joinClassAsStudent(user, params.classToken, params.classId);
     }
 }

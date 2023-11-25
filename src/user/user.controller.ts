@@ -2,16 +2,17 @@ import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatu
 import { UserService } from './service/user.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/AuthGuard/jwt-auth.guard';
 import { TokenPayload } from '../auth/interface/tokenPayload.interface';
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { EditProfileDTO } from './dto/editProfile.dto';
 import { User } from './schema/user.schema';
 import { ChangePassworDto } from './dto/changePassword.dto';
-import { sendOTPDto } from '../auth/dto/sendOTP.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from './service/storage.service';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
+import { sendOTPDto } from './dto/sendOtp.dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -64,7 +65,6 @@ export class UserController {
     return data.pipe(res);
   }
 
-
   @Patch('/change_password')
   @UseGuards(JwtAuthGuard)
   async changePassword(@CurrentUser() user: User, @Body() dto: ChangePassworDto) {
@@ -78,9 +78,15 @@ export class UserController {
     return this.usersService.sendRegisterOTP(dto.email);
   }
 
-  @HttpCode(HttpStatus.OK)
-  @Get('hello')
-  getHello() {
-    return 'hello';
+  @HttpCode(HttpStatus.CREATED)
+  @Post('send_resetOtp')
+  async sendOTP(@Body() dto: sendOTPDto) {
+    return this.usersService.sendResetOTP(dto.email);
+  }
+
+  @HttpCode(HttpStatus.CREATED)
+  @Post('reset_password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.usersService.resetPassword(dto);
   }
 }
