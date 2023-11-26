@@ -1,4 +1,4 @@
-import { Module, Session } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
@@ -10,9 +10,6 @@ import { RefreshStrategy } from './strategies/refresh.strategy';
 import { UserModule } from '../user/user.module';
 import { GoogleStrategy } from './strategies/oauth.strategy/google-plus.strategy';
 import { SessionSerializer } from '../utils/serializer/serializer';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ResetOtpSchema } from './schema/resetOtp.schema';
-import { MailModule } from '../mail/mail.module';
 import { FacebookStrategy } from './strategies/oauth.strategy/facebook.strategy';
 
 @Module({

@@ -1,23 +1,27 @@
 import { ConflictException, HttpException, HttpStatus, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Class } from "../schema/class.schema";
 import { Model } from "mongoose";
 import { CreateClassDto } from "../dto/createClass.dto";
-import { ClassUser } from "../schema/classUser.schema";
 import { Types } from 'mongoose';
 import { UserService } from "src/user/service/user.service";
-import { User } from "src/user/schema/user.schema";
+import { Class, ClassDocument } from "src/utils/schema/class.schema";
+import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
+import { User, UserDocument } from "src/utils/schema/user.schema";
 
 @Injectable()
 export class ClassService {
     constructor(
-        @InjectModel(Class.name) private readonly classRepository: Model<Class>,
-        @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUser>,
-        @Inject(UserService) private readonly userService: UserService,
+        @InjectModel(Class.name) private readonly classRepository: Model<ClassDocument>,
+        @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>,
+        @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
     ) { }
 
     async checkInClass(user: User, classId: string): Promise<any> {
-        const classUser = await this.classUserRepository.findOne({ user_id: user._id, class_id: classId }).exec();
+        const classUser = await this.classUserRepository.findOne({
+            class_id: classId,
+            'teachers.user_id': user._id
+        }).exec();
+
         if (classUser == null) {
             return new HttpException('You are not in this class', HttpStatus.FORBIDDEN);
         }
@@ -40,10 +44,8 @@ export class ClassService {
 
         const newClassUser = new this.classUserRepository({
             class_id: newClass._id,
-            user_id: host._id,
-            isStudent: false,
-        });
-        await newClassUser.save();
+            teachers: [{ user_id: host._id }]
+        }).save();
 
         return { newClass, newClassUser };
     }
@@ -54,8 +56,8 @@ export class ClassService {
         const clazz = await this.classRepository.findOne({ _id: classId, host: host._id }).exec();
         if (!clazz) return new NotFoundException("Class not found");
 
-        await this.classRepository.deleteOne({ _id: classId, host: host._id }).exec();
-        await this.classUserRepository.deleteMany({ class_id: classId }).exec();
+        await this.classRepository.findOneAndDelete({ _id: classId, host: host._id }).exec();
+        await this.classUserRepository.findOneAndDelete({ class_id: classId }).exec();
 
         return new HttpException("Delete class successfully", HttpStatus.OK);
     }
@@ -87,9 +89,9 @@ export class ClassService {
     async getTeachers(host: User, classId: string): Promise<any> {
         this.checkInClass(host, classId);
         try {
-            const classUsers = await this.classUserRepository.find({ class_id: new Types.ObjectId(classId), isStudent: false });
-            const userIds = classUsers.map(classUser => classUser.user_id);
-            const teachers = await this.userService.getUsersByIds(userIds);
+            const classUsers = await this.classUserRepository.find({ class_id: new Types.ObjectId(classId) });
+            const userIds = classUsers.map(classUser => classUser.students.map(student => student.user_id));
+            const teachers = await this.userRepository.find({ _id: { $in: userIds } });
             return teachers;
         }
         catch (error) {
@@ -100,9 +102,9 @@ export class ClassService {
     async getStudents(host: User, classId: string): Promise<any> {
         this.checkInClass(host, classId);
         try {
-            const classUsers = await this.classUserRepository.find({ class_id: classId, isStudent: true });
-            const userIds = classUsers.map(classUser => classUser.user_id);
-            const students = await this.userService.getUsersByIds(userIds);
+            const classUsers = await this.classUserRepository.find({ class_id: classId });
+            const userIds = classUsers.map(classUser => classUser.students.map(student => student.user_id));
+            const students = await this.userRepository.find({ _id: { $in: userIds } });
 
             return students;
         }

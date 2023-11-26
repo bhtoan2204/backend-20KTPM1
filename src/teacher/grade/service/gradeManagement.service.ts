@@ -1,18 +1,28 @@
 import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Workbook } from "exceljs";
+import { Model, Types } from "mongoose";
 import * as tmp from 'tmp';
-import { User } from "../schema/user.schema";
-import { ClassUser } from "../schema/classUser.schema";
-import { GradeComposition } from "../schema/gradeComposition.schema";
+import { StorageService } from "src/user/service/storage.service";
+import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
+import { User, UserDocument } from "src/utils/schema/user.schema";
+import { Class, ClassDocument } from "src/utils/schema/class.schema";
 
 @Injectable()
 export class GradeManagementService {
     constructor(
-        @InjectModel(GradeComposition.name) private readonly gradeCompositionRepository,
-        @InjectModel(ClassUser.name) private readonly classUserRepository,
-        @InjectModel(User.name) private readonly userRepository,
+        @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>,
+        @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
+        @InjectModel(Class.name) private readonly classRepository: Model<ClassDocument>,
+        @Inject(StorageService) private readonly storageService: StorageService,
     ) { }
+
+    async checkIsHost(user: User, classId: string): Promise<any> {
+        const clazz = await this.classRepository.findOne({ _id: classId, host: user._id }).exec();
+        if (!clazz) {
+            return new HttpException('You are not the host of this class', HttpStatus.FORBIDDEN);
+        }
+    }
 
     private styleSheet(sheet) {
         sheet.getColumn(1).width = 30;
@@ -29,7 +39,7 @@ export class GradeManagementService {
     }
 
     private async checkInClass(user: User, classId: string): Promise<any> {
-        const classUser = await this.classUserRepository.findOne({ user_id: user._id, class_id: classId }).exec();
+        const classUser = await this.classUserRepository.findOne({ user_id: user._id, class_id: new Types.ObjectId(classId) }).exec();
         if (classUser == null) {
             return new HttpException('You are not in this class', HttpStatus.FORBIDDEN);
         }
@@ -40,19 +50,55 @@ export class GradeManagementService {
         if (classUser == null) {
             throw new HttpException('Class not found', HttpStatus.NOT_FOUND);
         }
-        const users = await this.userRepository.find({ _id: { $in: classUser.map((user) => user.user_id) } }).exec();
-
+        const studentids = classUser.map((classUser) => classUser.students.map((student) => student.user_id));
+        const users = await this.userRepository.find({ _id: { $in: studentids } }).exec();
         return users;
     }
 
     private async isClassExist(classId: string): Promise<any> {
-        const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
-        if (classUser == null) {
+        const clazz = await this.classRepository.findOne({ _id: classId }).exec();
+        if (!clazz) {
             throw new HttpException('Class not found', HttpStatus.NOT_FOUND);
         }
     }
 
-    async downloadListStudentCsv(currentUser: User, classId: string) {
+    async downloadListStudentTemplate(currentUser: User, classId: string) {
+        this.checkInClass(currentUser, classId);
+
+        const users = await this.getStudentOfClass(classId);
+        let rows = [];
+        users.forEach((user) => {
+            rows.push(Object.values({ Name: user.fullname, Id: user._id.toString() }));
+        });
+        let book = new Workbook();
+        let sheet = book.addWorksheet('List Student');
+        rows.unshift(Object.values({ studentName: 'Student Name', studentId: 'Student Id' }));
+        sheet.addRows(rows);
+        this.styleSheet(sheet);
+
+        let File = await new Promise((resolve, rejects) => {
+            tmp.file(
+                {
+                    discardDescriptor: true,
+                    prefix: `MyExcelSheet`,
+                    postfix: '.xlsx',
+                    mode: parseInt('0600', 8),
+                },
+                async (err, file) => {
+                    if (err) throw new BadRequestException(err);
+                    await book.xlsx.writeFile(file);
+                    resolve(file);
+                }
+            );
+        });
+
+        return File;
+    }
+
+    async uploadListStudentCsv(currentUser: User, classId: string) {
+        this.isClassExist(classId);
+        this.checkIsHost(currentUser, classId);
+
         this.isClassExist(classId);
         this.checkInClass(currentUser, classId);
         const users = await this.getStudentOfClass(classId);
@@ -83,7 +129,26 @@ export class GradeManagementService {
             );
         });
 
-        return File;
+    }
+
+    async showStudentsListxGradesBoard(currentUser: User, classId: string) {
+
+    }
+
+    async exportGradeBoard(currentUser: User, classId: string) {
+
+    }
+
+    async markGradeCompositionAsFinal(currentUser: User, gradeCompositionName: string, classId: string) {
+        this.checkInClass(currentUser, classId);
+
+        const clazz = await this.classRepository.findOneAndUpdate(
+            { _id: classId, "grade_compositions.gradeCompo_name": gradeCompositionName },
+            { $set: { "grade_compositions.$.isFinal": true } },
+            { new: true }
+        ).exec();
+
+        return clazz.grade_compositions;
     }
 
 }

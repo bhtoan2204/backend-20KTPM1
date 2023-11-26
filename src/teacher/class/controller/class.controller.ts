@@ -4,18 +4,22 @@ import { ClassService } from "../service/class.service";
 import { CreateClassDto } from "../dto/createClass.dto";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import { JwtAuthGuard } from "src/auth/guards/AuthGuard/jwt-auth.guard";
-import { CurrentUser } from "src/auth/decorator/current-user.decorator";
+import { CurrentUser } from "src/utils/decorator/current-user.decorator";
+import { RolesGuard } from "src/utils/authorize/role.guard";
+import { Roles } from "src/utils/decorator/role.decorator";
+import { Role } from "src/utils/enum/role.enum";
 
 @ApiTags('class')
 @Controller('class')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.TEACHER)
 export class ClassController {
     constructor(
         private readonly classService: ClassService
     ) { }
 
     @HttpCode(HttpStatus.CREATED)
-    @UseGuards(JwtAuthGuard)
     @Post('/create')
     @ApiOperation({ summary: 'Create Class' })
     async create(@CurrentUser() host, @Body() dto: CreateClassDto) {
@@ -23,7 +27,6 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtAuthGuard)
     @UseInterceptors(CacheInterceptor)
     @Get('/getAll')
     @ApiOperation({ summary: 'Get all classes' })
@@ -32,7 +35,6 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtAuthGuard)
     @Get('/classDetail/:classId')
     @ApiOperation({ summary: 'Get class detail' })
     @ApiParam({ name: 'classId', type: String })
@@ -40,7 +42,6 @@ export class ClassController {
         return this.classService.getClassDetail(host, params.classId);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Delete('/:classId')
     @ApiOperation({ summary: 'Delete class' })
     @ApiParam({ name: 'classId', type: String })
@@ -49,7 +50,6 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtAuthGuard)
     @UseInterceptors(CacheInterceptor)
     @Get('/getTeachers/:classId')
     @ApiOperation({ summary: 'Get teacher of class' })
@@ -59,7 +59,6 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtAuthGuard)
     @UseInterceptors(CacheInterceptor)
     @Get('/getStudents/:classId')
     @ApiOperation({ summary: 'Get students of class' })

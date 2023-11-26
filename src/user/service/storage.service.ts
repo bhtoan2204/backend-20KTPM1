@@ -57,4 +57,6 @@ export class StorageService {
         const downloadBlockBlobResponse = await blobBlobClient.download(0);
         return downloadBlockBlobResponse.readableStreamBody;
     }
+
+
 }

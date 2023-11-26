@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './service/user.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserSchema } from './schema/user.schema';
-import { RegisterOtpSchema } from './schema/registerOtp.schema';
 import { MailModule } from '../mail/mail.module';
 import { StorageService } from './service/storage.service';
-import { ResetOtpSchema } from './schema/resetOtp.schema';
+import { UserSchema } from 'src/utils/schema/user.schema';
+import { RegisterOtpSchema } from 'src/utils/schema/registerOtp.schema';
+import { ResetOtpSchema } from 'src/utils/schema/resetOtp.schema';
 
 @Module({
   imports: [

@@ -1,18 +1,19 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Invitation } from "../schema/invitation.schema";
 import { Model, Types } from "mongoose";
-import { User } from "src/user/schema/user.schema";
-import { Class } from "../schema/class.schema";
 import { Request } from "express";
-import { ClassUser } from "../schema/classUser.schema";
+import { Invitation, InvitationDocument } from "src/utils/schema/invitation.schema";
+import { Class, ClassDocument } from "src/utils/schema/class.schema";
+import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
+import { User, UserDocument } from "src/utils/schema/user.schema";
 
 @Injectable()
 export class InvitationService {
     constructor(
-        @InjectModel(Invitation.name) private readonly invitationRepository: Model<Invitation>,
-        @InjectModel(Class.name) private readonly classRepository: Model<Class>,
-        @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUser>,
+        @InjectModel(Invitation.name) private readonly invitationRepository: Model<InvitationDocument>,
+        @InjectModel(Class.name) private readonly classRepository: Model<ClassDocument>,
+        @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>,
+        @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
     ) { }
 
     async checkIsHost(user: User, classId: string): Promise<any> {
@@ -23,7 +24,12 @@ export class InvitationService {
     }
 
     async checkInClass(user: User, classId: string): Promise<any> {
-        const classUser = await this.classUserRepository.findOne({ user_id: user._id, class_id: classId }).exec();
+        const classUser = await this.classUserRepository.findOne(
+            {
+                class_id: classId,
+                'teachers.user_id': user._id
+            }
+        ).exec();
         if (classUser == null) {
             return new HttpException('You are not in this class', HttpStatus.FORBIDDEN);
         }
@@ -52,21 +58,35 @@ export class InvitationService {
         };
     }
 
-    async joinClassAsTeacher(user: User, classToken: string, classId: string): Promise<any> {
+    async joinClass(user: User, classToken: string, classId: string): Promise<any> {
         this.checkInClass(user, classId);
 
         const invitation = await this.invitationRepository.findOne({ class_id: classId, class_token: classToken }).exec();
 
         if (!invitation) return new NotFoundException("Invitation not found");
 
-        const classUser = new this.classUserRepository({
-            class_id: new Types.ObjectId(classId),
-            user_id: new Types.ObjectId(user._id),
-            isStudent: false,
-        });
+        const classUser = await this.classUserRepository.findByIdAndUpdate(
+            { class_id: classId },
+            { $push: { teachers: { user_id: user._id } } },
+            { new: true }
+        )
 
+        const clazz = await this.classRepository.findOne({ _id: classId }).exec();
 
-        await classUser.save();
+        await this.userRepository.findOneAndUpdate(
+            { _id: user._id },
+            {
+                $push: {
+                    classes: {
+                        class_id: classId,
+                        class_name: clazz.className,
+                        class_description: clazz.description,
+                    }
+                }
+            },
+            { new: true }
+        )
+
         return classUser;
     }
 }

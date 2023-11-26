@@ -1,23 +1,21 @@
 import { HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { GradeComposition, GradeCompositionDocument } from "../schema/gradeComposition.schema";
 import { Model, Types } from "mongoose";
 import { CreateGradeCompositionDto } from "../dto/createGradeComposition.dto";
-import { User } from "src/user/schema/user.schema";
-import { Class, ClassDocument } from "../schema/class.schema";
-import { ClassUser } from "../schema/classUser.schema";
+import { Class, ClassDocument } from "src/utils/schema/class.schema";
+import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
+import { User } from "src/utils/schema/user.schema";
 
 
 @Injectable()
 export class GradeCompositionService {
     constructor(
-        @InjectModel(GradeComposition.name) private readonly gradeCompositionRepository: Model<GradeCompositionDocument>,
         @InjectModel(Class.name) private readonly classRepository: Model<ClassDocument>,
-        @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUser>,
+        @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>,
     ) { }
 
     async checkIsHost(user: User, classId: string): Promise<any> {
-        const clazz = await this.classRepository.findOne({ _id: classId, host: user._id }).exec();
+        const clazz = await this.classRepository.findOne({ _id: new Types.ObjectId(classId), host: user._id }).exec();
         if (!clazz) {
             return new HttpException('You are not the host of this class', HttpStatus.FORBIDDEN);
         }
@@ -31,74 +29,65 @@ export class GradeCompositionService {
     }
 
     async createGradeComposition(user: User, dto: CreateGradeCompositionDto) {
-        this.checkIsHost(user, dto.class_id);
+        try {
+            this.checkIsHost(user, dto.class_id);
+            const classId = new Types.ObjectId(dto.class_id);
 
-        const gradeComposition = new this.gradeCompositionRepository({
-            class_id: new Types.ObjectId(dto.class_id),
-            gradeCompo_name: dto.name,
-            gradeCompo_scale: dto.scale
-        });
-        await gradeComposition.save();
-        return gradeComposition;
+            const clazz = await this.classRepository.findOneAndUpdate(
+                { _id: classId },
+                {
+                    $push: {
+                        grade_compositions: {
+                            gradeCompo_name: dto.name,
+                            gradeCompo_scale: dto.scale,
+                        }
+                    }
+                }).exec();
+
+            return clazz.grade_compositions[clazz.grade_compositions.length - 1];
+        }
+        catch (err) {
+            return new HttpException("Class not found or Composition Name is duplicated", HttpStatus.NOT_FOUND);
+        }
     }
 
     async getCurentGradeStructure(user: User, classId: string) {
         this.checkInClass(user, classId);
 
-        const gradeComposition = await this.gradeCompositionRepository.find({ class_id: new Types.ObjectId(classId) })
-            .select("gradeCompo_name gradeCompo_scale")
-            .exec();
-
-        return gradeComposition;
+        return await this.classRepository.findOne({ _id: classId }).select("grade_compositions").exec();
     }
 
-    async removeGradeCompositions(user: User, classId: string, gradeCompoId: string) {
+    async removeGradeCompositions(user: User, classId: string, gradeCompoName: string) {
         this.checkIsHost(user, classId);
         try {
-            const gradeComposition = await this.gradeCompositionRepository.findOneAndDelete(
+            const clazz = await this.classRepository.findOneAndUpdate(
+                { _id: classId },
                 {
-                    _id: new Types.ObjectId(gradeCompoId),
-                    class_id: new Types.ObjectId(classId)
+                    $pull: {
+                        grade_compositions: {
+                            gradeCompoName
+                        }
+                    }
                 }).exec();
-
-            return { message: "Grade composition deleted" };
+            return clazz.grade_compositions;
         }
         catch (err) {
             return new HttpException("Grade composition not found", HttpStatus.NOT_FOUND);
         }
     }
 
-    async updateGradeCompositions(user: User, classId: string, gradeCompoId: string, dto: CreateGradeCompositionDto) {
-        this.checkIsHost(user, classId);
+    async updateGradeCompositions(user: User, dto: CreateGradeCompositionDto, oldName: string) {
+        this.checkIsHost(user, dto.class_id);
 
-        const gradeComposition = await this.gradeCompositionRepository.findOne({ _id: new Types.ObjectId(gradeCompoId), class_id: new Types.ObjectId(classId) }).exec();
-        if (!gradeComposition) return new HttpException("Grade composition not found", HttpStatus.NOT_FOUND);
+        const clazz = await this.classRepository.findOneAndUpdate(
+            { _id: new Types.ObjectId(dto.class_id), "grade_compositions.gradeCompo_name": oldName },
+            {
+                $set: {
+                    "grade_compositions.$.gradeCompo_name": dto.name,
+                    "grade_compositions.$.gradeCompo_scale": dto.scale,
+                }
+            }).exec();
 
-        gradeComposition.gradeCompo_name = dto.name;
-        gradeComposition.gradeCompo_scale = dto.scale;
-        await gradeComposition.save();
-        return gradeComposition;
-    }
-
-    async getAcesndingGradeCompositions(user: User, classId: string) {
-        this.checkInClass(user, classId);
-
-        const gradeComposition = await this.gradeCompositionRepository.find({ class_id: new Types.ObjectId(classId) })
-            .select("gradeCompo_name gradeCompo_scale")
-            .sort({ gradeCompo_scale: 1 })
-            .exec();
-
-        return gradeComposition;
-    }
-
-    async getDescendingGradeCompositions(user: User, classId: string) {
-        this.checkInClass(user, classId);
-
-        const gradeComposition = await this.gradeCompositionRepository.find({ class_id: new Types.ObjectId(classId) })
-            .select("gradeCompo_name gradeCompo_scale")
-            .sort({ gradeCompo_scale: -1 })
-            .exec();
-
-        return gradeComposition;
+        return clazz?.grade_compositions.find(compo => compo.gradeCompo_name === dto.name);
     }
 }

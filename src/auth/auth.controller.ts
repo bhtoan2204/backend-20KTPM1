@@ -3,13 +3,13 @@ import { ApiBearerAuth, ApiTags, } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/AuthGuard/local-auth.guard';
 import { JwtRefreshGuard } from './guards/AuthGuard/jwt-refresh.guard';
-import { CurrentUser } from './decorator/current-user.decorator';
+import { CurrentUser } from '../utils/decorator/current-user.decorator';
 import { LoginDto } from './dto/login.dto';
-import { User } from '../user/schema/user.schema';
 import { Public } from './guards/AuthGuard/public.guard';
 import { GoogleAuthGuard } from './guards/AuthGuard/google-auth.guard';
 import { FacebookAuthGuard } from './guards/AuthGuard/facebook-auth.guard';
 import { ConfigService } from '@nestjs/config';
+import { User } from 'src/utils/schema/user.schema';
 
 @ApiTags('auth')
 @Controller('auth')

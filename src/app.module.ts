@@ -6,13 +6,17 @@ import * as Joi from 'joi';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
-import { join } from 'path';
+import path, { join } from 'path';
 import { MailModule } from './mail/mail.module';
 import { PassportModule } from '@nestjs/passport';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TeacherModule } from './teacher/teacher.module';
+import { APP_GUARD, RouterModule } from '@nestjs/core';
+import { RolesGuard } from './utils/authorize/role.guard';
+import { ClassModule } from './teacher/class/class.module';
+import { GradeModule } from './teacher/grade/grade.module';
 
 @Module({
   imports: [
@@ -65,6 +69,22 @@ import { TeacherModule } from './teacher/teacher.module';
       ttl: 10,
       max: 10,
     }),
+    RouterModule.register([
+      {
+        path: '',
+        module: TeacherModule,
+        children: [
+          {
+            path: 'teacher',
+            module: ClassModule,
+          },
+          {
+            path: 'teacher',
+            module: GradeModule,
+          }
+        ]
+      }
+    ])
   ],
   controllers: [AppController],
   providers: [AppService],

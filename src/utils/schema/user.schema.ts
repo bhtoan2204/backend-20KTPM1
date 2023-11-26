@@ -1,21 +1,21 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
-import { AbstractDocument } from "src/utils/database/abstract.schema";
-
-enum Role {
-    ADMIN = 'admin',
-    STUDENT = 'student',
-    TEACHER = 'teacher',
-    NULL = 'null',
-}
-
-enum LoginType {
-    GOOGLE = 'google',
-    FACEBOOK = 'facebook',
-    LOCAL = 'local',
-}
+import { Document, Types } from "mongoose";
+import { AbstractDocument } from "../../utils/database/abstract.schema";
+import { Role } from "src/utils/enum/role.enum";
+import { LoginType } from "src/utils/enum/loginType.enum";
 
 export type UserDocument = User & Document;
+
+class Class {
+    @Prop({ type: Types.ObjectId, ref: 'Class' })
+    class_id: Types.ObjectId;
+
+    @Prop({ default: null })
+    class_name: string;
+
+    @Prop({ default: null })
+    class_description: string;
+}
 
 @Schema({
     toJSON: {
@@ -48,6 +48,9 @@ export class User extends AbstractDocument {
 
     @Prop({ default: 'local', type: String, enum: LoginType })
     login_type: string
+
+    @Prop({ type: [Class], default: [] })
+    classes: Class[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

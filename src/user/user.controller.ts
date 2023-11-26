@@ -4,15 +4,16 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
 import { JwtAuthGuard } from '../auth/guards/AuthGuard/jwt-auth.guard';
 import { TokenPayload } from '../auth/interface/tokenPayload.interface';
-import { CurrentUser } from '../auth/decorator/current-user.decorator';
+import { CurrentUser } from '../utils/decorator/current-user.decorator';
 import { EditProfileDTO } from './dto/editProfile.dto';
-import { User } from './schema/user.schema';
 import { ChangePassworDto } from './dto/changePassword.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from './service/storage.service';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { sendOTPDto } from './dto/sendOtp.dto';
+import { RoleDto } from './dto/role.dto';
+import { User } from 'src/utils/schema/user.schema';
 
 @ApiTags('user')
 @Controller('user')
@@ -69,7 +70,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   async changePassword(@CurrentUser() user: User, @Body() dto: ChangePassworDto) {
     const { _id } = user;
-    return this.usersService.changePassword(_id, dto);
+    return this.usersService.updatePassword(_id, dto);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -88,5 +89,12 @@ export class UserController {
   @Post('reset_password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.usersService.resetPassword(dto);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Patch('/assign-role')
+  @UseGuards(JwtAuthGuard)
+  async assignRole(@CurrentUser() user: User, @Body() dto: RoleDto) {
+    return this.usersService.assignRole(user, dto.role);
   }
 }
