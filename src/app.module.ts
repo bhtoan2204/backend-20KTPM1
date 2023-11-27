@@ -6,17 +6,21 @@ import * as Joi from 'joi';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
-import path, { join } from 'path';
+import { join } from 'path';
 import { MailModule } from './mail/mail.module';
 import { PassportModule } from '@nestjs/passport';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TeacherModule } from './teacher/teacher.module';
-import { APP_GUARD, RouterModule } from '@nestjs/core';
-import { RolesGuard } from './utils/authorize/role.guard';
+import { RouterModule } from '@nestjs/core';
 import { ClassModule } from './teacher/class/class.module';
 import { GradeModule } from './teacher/grade/grade.module';
+import { StudentModule } from './student/student.module';
+import { ClassStudentsModule } from './student/class/class.module';
+import { GradeViewerModule } from './student/grade/grade.module';
+import { AdminModule } from './admin/admin.module';
+import { AccountsModule } from './admin/accounts/accounts.module';
 
 @Module({
   imports: [
@@ -38,9 +42,30 @@ import { GradeModule } from './teacher/grade/grade.module';
         GOOGLE_REFRESH_TOKEN: Joi.string().required(),
         GOOGLE_EMAIL: Joi.string().required(),
         GOOGLE_CALLBACK_URL: Joi.string().required(),
+        FACEBOOK_CLIENT_ID: Joi.string().required(),
+        FACEBOOK_CLIENT_SECRET: Joi.string().required(),
+        FACEBOOK_CALLBACK_URL: Joi.string().required(),
+        AZURE_STORAGE_CONNECTION: Joi.string().required(),
+        AZURE_STORAGE_CONTAINER: Joi.string().required(),
+        ELASTICSEARCH_NODE: Joi.string().required(),
+        ELASTICSEARCH_USERNAME: Joi.string().required(),
+        ELASTICSEARCH_PASSWORD: Joi.string().required(),
+        FRONTEND_URL: Joi.string().required(),
       }),
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
+    }),
+    MailModule,
+    UserModule,
+    AuthModule,
+    TeacherModule,
+    StudentModule,
+    AdminModule,
+    PassportModule.register({ session: true }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 10,
+      max: 10,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -49,7 +74,6 @@ import { GradeModule } from './teacher/grade/grade.module';
       }),
       inject: [ConfigService],
     }),
-    MailModule,
     MailerModule.forRoot({
       transport: 'smtps://user@domain.com:pass@smtp.domain.com',
       template: {
@@ -60,16 +84,17 @@ import { GradeModule } from './teacher/grade/grade.module';
         },
       },
     }),
-    UserModule,
-    AuthModule,
-    TeacherModule,
-    PassportModule.register({ session: true }),
-    CacheModule.register({
-      isGlobal: true,
-      ttl: 10,
-      max: 10,
-    }),
     RouterModule.register([
+      {
+        path: '',
+        module: AdminModule,
+        children: [
+          {
+            path: 'admin',
+            module: AccountsModule,
+          }
+        ]
+      },
       {
         path: '',
         module: TeacherModule,
@@ -81,6 +106,20 @@ import { GradeModule } from './teacher/grade/grade.module';
           {
             path: 'teacher',
             module: GradeModule,
+          }
+        ]
+      },
+      {
+        path: '',
+        module: StudentModule,
+        children: [
+          {
+            path: 'student',
+            module: ClassStudentsModule,
+          },
+          {
+            path: 'student',
+            module: GradeViewerModule,
           }
         ]
       }

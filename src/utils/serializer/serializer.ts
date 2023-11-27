@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { Inject, Injectable } from '@nestjs/common';
 import { PassportSerializer } from '@nestjs/passport';
-import { UserService } from '../../user/service/user.service';
+import { UserService } from '../../user/user.service';
 import { User } from '../schema/user.schema';
 
 @Injectable()

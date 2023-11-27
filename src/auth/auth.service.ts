@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { TokenPayload } from './interface/tokenPayload.interface';
-import { UserService } from '../user/service/user.service';
+import { UserService } from '../user/user.service';
 import { User } from 'src/utils/schema/user.schema';
 
 @Injectable()

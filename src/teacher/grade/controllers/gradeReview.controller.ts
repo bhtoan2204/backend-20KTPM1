@@ -2,7 +2,7 @@ import { Controller } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { GradeReviewService } from "../service/gradeReview.service";
 
-@ApiTags('gradeReview')
+@ApiTags('Grade Review for Teacher')
 @Controller('gradeReview')
 @ApiBearerAuth()
 export class GradeReviewController {

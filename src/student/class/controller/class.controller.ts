@@ -5,11 +5,12 @@ import { RolesGuard } from "src/utils/authorize/role.guard";
 import { Roles } from "src/utils/decorator/role.decorator";
 import { Role } from "src/utils/enum/role.enum";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
-import { ApiOperation, ApiParam } from "@nestjs/swagger";
+import { ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 
+@ApiTags('Class for student')
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.TEACHER)
+@Roles(Role.STUDENT)
 export class ClassController {
     constructor(
         private readonly classService: ClassService

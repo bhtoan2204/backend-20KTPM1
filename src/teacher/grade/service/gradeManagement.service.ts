@@ -3,7 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Workbook } from "exceljs";
 import { Model, Types } from "mongoose";
 import * as tmp from 'tmp';
-import { StorageService } from "src/user/service/storage.service";
+import { StorageService } from "src/storage/storage.service";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { User, UserDocument } from "src/utils/schema/user.schema";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";

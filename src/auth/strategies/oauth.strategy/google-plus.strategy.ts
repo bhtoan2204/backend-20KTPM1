@@ -1,7 +1,7 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback, Profile } from 'passport-google-oauth20';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { UserService } from '../../../user/service/user.service';
+import { UserService } from '../../../user/user.service';
 import { ConfigService } from '@nestjs/config';
 // import { OAuth2Client } from 'google-auth-library';
 // import * as jwt from 'jsonwebtoken';

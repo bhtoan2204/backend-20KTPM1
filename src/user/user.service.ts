@@ -1,16 +1,17 @@
 import { ConflictException, HttpException, HttpStatus, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { CreateUserDto } from '../dto/createUser.dto';
+import { CreateUserDto } from './dto/createUser.dto';
 import * as bcrypt from 'bcrypt';
-import { RegistrationException } from '../exception/registration.exception';
+import { RegistrationException } from './exception/registration.exception';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { MailService } from '../../mail/mail.service';
-import { ChangePassworDto } from '../dto/changePassword.dto';
-import { ResetPasswordDto } from '../dto/resetPassword.dto';
+import { MailService } from '../mail/mail.service';
+import { ChangePassworDto } from './dto/changePassword.dto';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { LoginType } from 'src/utils/enum/loginType.enum';
 import { User, UserDocument } from 'src/utils/schema/user.schema';
 import { RegisterOtp, RegisterOtpDocument } from 'src/utils/schema/registerOtp.schema';
 import { ResetOtp, ResetOtpDocument } from 'src/utils/schema/resetOtp.schema';
+import { SearchService } from 'src/elastic/search.service';
 
 @Injectable()
 export class UserService {
@@ -19,6 +20,7 @@ export class UserService {
     @InjectModel(RegisterOtp.name) private registerOtpRepository: Model<RegisterOtpDocument>,
     @InjectModel(ResetOtp.name) private resetOtpRepository: Model<ResetOtpDocument>,
     @Inject(MailService) private readonly mailService: MailService,
+    @Inject(SearchService) private readonly searchService: SearchService,
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
@@ -41,6 +43,7 @@ export class UserService {
       });
 
       await newUser.save();
+      await this.searchService.indexUser(newUser);
       await this.registerOtpRepository.deleteOne({ email: createUserDto.email }).exec();
 
       return {
@@ -115,6 +118,9 @@ export class UserService {
 
       user.fullname = dto.fullname;
       user.birthday = dto.birthday;
+
+      await this.searchService.update(user);
+
       return { message: "Update profile successfully" }
     }
     catch (err) {
@@ -170,6 +176,7 @@ export class UserService {
         birthday: new Date(),
         login_type: LoginType.GOOGLE,
       });
+      await this.searchService.indexUser(newUser);
       return await newUser.save();
     }
   }
@@ -191,6 +198,7 @@ export class UserService {
         birthday: new Date(),
         login_type: LoginType.FACEBOOK,
       });
+      await this.searchService.indexUser(newUser);
       return await newUser.save();
     }
   }
@@ -285,7 +293,8 @@ export class UserService {
 
   async assignRole(user: User, role: string) {
     try {
-      await this.userRepository.findOneAndUpdate({ _id: user._id }, { role }).exec();
+      const updatedUser = await this.userRepository.findOneAndUpdate({ _id: user._id }, { role }).exec();
+      await this.searchService.update(updatedUser);
       return { message: "Assign role successfully" };
     }
     catch (err) {

@@ -11,7 +11,7 @@ import { FacebookAuthGuard } from './guards/AuthGuard/facebook-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/utils/schema/user.schema';
 
-@ApiTags('auth')
+@ApiTags('Authentication')
 @Controller('auth')
 @ApiBearerAuth()
 export class AuthController {

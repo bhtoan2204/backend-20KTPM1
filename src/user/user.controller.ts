@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatus, UseInterceptors, UploadedFile, Header, Res, Query } from '@nestjs/common';
-import { UserService } from './service/user.service';
+import { UserService } from './user.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
 import { JwtAuthGuard } from '../auth/guards/AuthGuard/jwt-auth.guard';
@@ -9,13 +9,13 @@ import { EditProfileDTO } from './dto/editProfile.dto';
 import { ChangePassworDto } from './dto/changePassword.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { StorageService } from './service/storage.service';
+import { StorageService } from '../storage/storage.service';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { sendOTPDto } from './dto/sendOtp.dto';
 import { RoleDto } from './dto/role.dto';
 import { User } from 'src/utils/schema/user.schema';
 
-@ApiTags('user')
+@ApiTags('User and Profile')
 @Controller('user')
 @ApiBearerAuth()
 export class UserController {

@@ -49,6 +49,9 @@ export class User extends AbstractDocument {
     @Prop({ default: 'local', type: String, enum: LoginType })
     login_type: string
 
+    @Prop({ default: false })
+    is_ban: boolean;
+
     @Prop({ type: [Class], default: [] })
     classes: Class[];
 }

@@ -12,11 +12,13 @@ import { ClassSchema } from 'src/utils/schema/class.schema';
 import { ClassUserSchema } from 'src/utils/schema/classUser.schema';
 import { UserSchema } from 'src/utils/schema/user.schema';
 import { GradeReviewSchema } from 'src/utils/schema/gradeReview.schema';
+import { StorageModule } from 'src/storage/storage.module';
 
 @Module({
     imports: [
         ClassModule,
         UserModule,
+        StorageModule,
         MongooseModule.forFeature([{ name: 'Class', schema: ClassSchema }]),
         MongooseModule.forFeature([{ name: 'ClassUser', schema: ClassUserSchema }]),
         MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),

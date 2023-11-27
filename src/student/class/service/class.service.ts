@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import { UserService } from "src/user/service/user.service";
+import { UserService } from "src/user/user.service";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { Invitation, InvitationDocument } from "src/utils/schema/invitation.schema";

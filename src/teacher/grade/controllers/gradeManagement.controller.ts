@@ -4,7 +4,7 @@ import { JwtAuthGuard } from "src/auth/guards/AuthGuard/jwt-auth.guard";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
 import { GradeManagementService } from "../service/gradeManagement.service";
 
-@ApiTags('gradeManagement')
+@ApiTags('Grade Management for Teacher')
 @Controller('gradeManagement')
 @ApiBearerAuth()
 export class GradeManagementController {

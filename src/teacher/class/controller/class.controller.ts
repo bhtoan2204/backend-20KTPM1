@@ -9,7 +9,7 @@ import { RolesGuard } from "src/utils/authorize/role.guard";
 import { Roles } from "src/utils/decorator/role.decorator";
 import { Role } from "src/utils/enum/role.enum";
 
-@ApiTags('class')
+@ApiTags('Class for Teacher')
 @Controller('class')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
