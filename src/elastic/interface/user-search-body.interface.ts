@@ -6,4 +6,5 @@ export interface UserBody {
     fullname: string;
     role: string;
     login_type: string;
+    student_id: string;
 }

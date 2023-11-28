@@ -95,7 +95,11 @@ export class UserService {
     const passwordIsValid = await bcrypt.compare(password, user.password);
     if (!passwordIsValid) {
       throw new UnauthorizedException('Credentials are not valid.');
-    } else {
+    }
+    if (user.is_ban === true) {
+      throw new UnauthorizedException('Your account has been banned.');
+    }
+    else {
       return user;
     };
   }
@@ -169,8 +173,12 @@ export class UserService {
       login_type: LoginType.GOOGLE
     }).exec();
 
-    if (user)
+    if (user) {
+      if (user.is_ban === true) {
+        throw new UnauthorizedException('Your account has been banned.');
+      }
       return user;
+    }
     else {
 
       const newUser = new this.userRepository({
@@ -194,7 +202,12 @@ export class UserService {
       login_type: LoginType.FACEBOOK
     }).exec();
 
-    if (user) return user;
+    if (user) {
+      if (user.is_ban === true) {
+        throw new UnauthorizedException('Your account has been banned.');
+      }
+      return user;
+    }
     else {
       const newUser = new this.userRepository({
         email: details._json.email,
