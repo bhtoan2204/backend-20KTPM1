@@ -15,6 +15,8 @@ class Class {
 
     @Prop({ default: null })
     class_description: string;
+
+    
 }
 
 @Schema({

@@ -102,4 +102,9 @@ export class ClassService {
         this.checkInClass(user, classId);
         return await this.classUserRepository.findOne({ class_id: new Types.ObjectId(classId) }).select("students").exec();
     }
+
+    async viewClassTeachers(user: User, classId: string) {
+        this.checkInClass(user, classId);
+        return await this.classUserRepository.findOne({ class_id: new Types.ObjectId(classId) }).select("teachers").exec();
+    }
 }

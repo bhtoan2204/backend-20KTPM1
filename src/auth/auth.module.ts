@@ -29,6 +29,6 @@ import { FacebookStrategy } from './strategies/oauth.strategy/facebook.strategy'
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, GoogleStrategy, SessionSerializer, FacebookStrategy],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule { }

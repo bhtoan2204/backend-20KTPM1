@@ -1,13 +1,13 @@
 import { Controller, Post, UseGuards, Req, Body, HttpCode, HttpStatus, Get, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/AuthGuard/local-auth.guard';
-import { JwtRefreshGuard } from './guards/AuthGuard/jwt-refresh.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser } from '../utils/decorator/current-user.decorator';
 import { LoginDto } from './dto/login.dto';
-import { Public } from './guards/AuthGuard/public.guard';
-import { GoogleAuthGuard } from './guards/AuthGuard/google-auth.guard';
-import { FacebookAuthGuard } from './guards/AuthGuard/facebook-auth.guard';
+import { Public } from './guards/public.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { FacebookAuthGuard } from './guards/facebook-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/utils/schema/user.schema';
 

@@ -1,6 +1,6 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam } from "@nestjs/swagger";
-import { JwtAuthGuard } from "src/auth/guards/AuthGuard/jwt-auth.guard";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
 import { Request } from "express";
 import { InvitationService } from "../service/invitation.service";

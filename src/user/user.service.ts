@@ -293,6 +293,7 @@ export class UserService {
 
   async assignRole(user: User, role: string) {
     try {
+      if (user.role !== 'null') throw new ConflictException("User already has role");
       const updatedUser = await this.userRepository.findOneAndUpdate({ _id: user._id }, { role }).exec();
       await this.searchService.update(updatedUser);
       return { message: "Assign role successfully" };

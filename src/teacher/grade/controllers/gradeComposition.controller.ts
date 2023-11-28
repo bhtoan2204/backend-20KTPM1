@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger"
 import { CreateGradeCompositionDto } from "../dto/createGradeComposition.dto";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import { GradeCompositionService } from "../service/gradeComposition.service";
-import { JwtAuthGuard } from "src/auth/guards/AuthGuard/jwt-auth.guard";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
 import { RolesGuard } from "src/utils/authorize/role.guard";
 import { Role } from "src/utils/enum/role.enum";

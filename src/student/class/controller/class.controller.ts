@@ -1,14 +1,15 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from "@nestjs/common";
 import { ClassService } from "../service/class.service";
-import { JwtAuthGuard } from "src/auth/guards/AuthGuard/jwt-auth.guard";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "src/utils/authorize/role.guard";
 import { Roles } from "src/utils/decorator/role.decorator";
 import { Role } from "src/utils/enum/role.enum";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
-import { ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 
 @ApiTags('Class for student')
-@Controller()
+@Controller('class')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.STUDENT)
 export class ClassController {
@@ -52,6 +53,13 @@ export class ClassController {
     @ApiOperation({ summary: 'View class members' })
     async viewClassMembers(@CurrentUser() user, @Param() params: any) {
         return this.classService.viewClassMembers(user, params.classId);
+    }
+
+    @HttpCode(HttpStatus.OK)
+    @Get('viewClassTeachers/:classId')
+    @ApiOperation({ summary: 'View class members' })
+    async viewClassTeachers(@CurrentUser() user, @Param() params: any) {
+        return this.classService.viewClassTeachers(user, params.classId);
     }
 
 }

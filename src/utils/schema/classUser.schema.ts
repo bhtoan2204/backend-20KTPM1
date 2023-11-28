@@ -10,6 +10,7 @@ class Student {
 
     @Prop({ default: null })
     student_id: string;
+
 }
 
 class Teacher {

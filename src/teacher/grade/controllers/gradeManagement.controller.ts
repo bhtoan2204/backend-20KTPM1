@@ -1,6 +1,6 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, UseGuards, Res, Header, Body, Post, Patch } from "@nestjs/common";
 import { ApiBearerAuth, ApiParam, ApiTags } from "@nestjs/swagger";
-import { JwtAuthGuard } from "src/auth/guards/AuthGuard/jwt-auth.guard";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
 import { GradeManagementService } from "../service/gradeManagement.service";
 
