@@ -2,7 +2,7 @@ import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatu
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../utils/guard/authenticate/jwt-auth.guard';
 import { TokenPayload } from '../auth/interface/tokenPayload.interface';
 import { CurrentUser } from '../utils/decorator/current-user.decorator';
 import { EditProfileDTO } from './dto/editProfile.dto';

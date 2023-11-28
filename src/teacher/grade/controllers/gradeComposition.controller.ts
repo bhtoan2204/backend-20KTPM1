@@ -1,13 +1,16 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards, Delete, UseInterceptors, Patch } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
-import { CreateGradeCompositionDto } from "../dto/createGradeComposition.dto";
+import { CreateGradeCompositionDto } from "../../dto/createGradeComposition.dto";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import { GradeCompositionService } from "../service/gradeComposition.service";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "src/utils/guard/authenticate/jwt-auth.guard";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
-import { RolesGuard } from "src/utils/authorize/role.guard";
+import { RolesGuard } from "src/utils/guard/authorize/role.guard";
 import { Role } from "src/utils/enum/role.enum";
 import { Roles } from "src/utils/decorator/role.decorator";
+import { RemoveGradeCompositionDto } from "src/teacher/dto/deleteGradeComposition.dto";
+import { UpdateGradeCompositionDto } from "src/teacher/dto/updateGradeComposition.dto";
+import { SwapGradeCompositionDto } from "src/teacher/dto/swapGradeComposition.dto";
 
 @ApiTags('Grade Composition for Teacher')
 @Controller('gradeComposition')
@@ -34,18 +37,22 @@ export class GradeCompositionController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @ApiParam({ name: 'classId', type: String })
-    @ApiParam({ name: 'gradeCompoId', type: String })
-    @Delete('/removeGradeCompositions/:classId/:gradeCompoId')
-    async removeGradeCompositions(@CurrentUser() user, @Param() params: any) {
-        return this.gradeService.removeGradeCompositions(user, params.classId, params.gradeCompoId);
+    @Delete('/removeGradeCompositions')
+    async removeGradeCompositions(@CurrentUser() user, @Body() dto: RemoveGradeCompositionDto) {
+        return this.gradeService.removeGradeCompositions(user, dto);
     }
 
     @HttpCode(HttpStatus.OK)
     @Patch('/updateGradeCompositions/:oldName')
     @ApiOperation({ summary: 'Update grade composition' })
-    async updateGradeCompositions(@CurrentUser() user, @Body() dto: CreateGradeCompositionDto, @Param() params: any) {
-        return this.gradeService.updateGradeCompositions(user, dto, params.oldName);
+    async updateGradeCompositions(@CurrentUser() user, @Body() dto: UpdateGradeCompositionDto, @Param() params: any) {
+        return this.gradeService.updateGradeCompositions(user, dto);
     }
 
+    @HttpCode(HttpStatus.OK)
+    @Patch('/swapGradeCompositions/:classId')
+    @ApiOperation({ summary: 'Swap grade composition' })
+    async swapGradeCompositions(@CurrentUser() user, @Body() dto: SwapGradeCompositionDto) {
+        return this.gradeService.swapGradeCompositions(user, dto);
+    }
 }

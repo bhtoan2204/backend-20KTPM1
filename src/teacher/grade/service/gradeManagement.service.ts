@@ -68,7 +68,7 @@ export class GradeManagementService {
         const users = await this.getStudentOfClass(classId);
         let rows = [];
         users.forEach((user) => {
-            rows.push(Object.values({ Name: user.fullname, Id: user._id.toString() }));
+            rows.push(Object.values({ Name: user.fullname, Id: user.student_id }));
         });
         let book = new Workbook();
         let sheet = book.addWorksheet('List Student');

@@ -1,6 +1,6 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, UseGuards, Res, Header, Body, Post, Patch } from "@nestjs/common";
 import { ApiBearerAuth, ApiParam, ApiTags } from "@nestjs/swagger";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "src/utils/guard/authenticate/jwt-auth.guard";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
 import { GradeManagementService } from "../service/gradeManagement.service";
 
@@ -15,9 +15,9 @@ export class GradeManagementController {
     @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)
     @ApiParam({ name: 'classId', type: String })
-    @Get('/downloadListStudent/:classId/')
+    @Get('/downloadListStudentTemplate/:classId/')
     @Header('Content-Type', 'text/xlsx')
-    async downloadListStudentCsv(@CurrentUser() user, @Param() params: any, @Res() res) {
+    async downloadListStudentTemplate(@CurrentUser() user, @Param() params: any, @Res() res) {
         const result = await this.gradeManagementService.downloadListStudentTemplate(user, params.classId);
         res.download(`${result}`);
     }

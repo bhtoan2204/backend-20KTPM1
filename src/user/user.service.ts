@@ -1,9 +1,7 @@
 import { ConflictException, HttpException, HttpStatus, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
-import * as bcrypt from 'bcrypt';
-import { RegistrationException } from './exception/registration.exception';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, MongooseError } from 'mongoose';
 import { MailService } from '../mail/mail.service';
 import { ChangePassworDto } from './dto/changePassword.dto';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
@@ -12,6 +10,9 @@ import { User, UserDocument } from 'src/utils/schema/user.schema';
 import { RegisterOtp, RegisterOtpDocument } from 'src/utils/schema/registerOtp.schema';
 import { ResetOtp, ResetOtpDocument } from 'src/utils/schema/resetOtp.schema';
 import { SearchService } from 'src/elastic/search.service';
+import { Role } from 'src/utils/enum/role.enum';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UserService {
@@ -39,8 +40,10 @@ export class UserService {
         role: 'null',
         fullname: createUserDto.fullname,
         birthday: new Date(),
-        login_type: 'local',
+        login_type: LoginType.LOCAL,
       });
+
+      newUser.student_id = newUser._id.toString();
 
       await newUser.save();
       await this.searchService.indexUser(newUser);
@@ -55,7 +58,7 @@ export class UserService {
         http_code: HttpStatus.CREATED,
       };
     } catch (err) {
-      throw new RegistrationException(err.message, err.http_code || 500, false);
+      throw new Error(err.message, err.http_code || 500);
     }
   }
 
@@ -63,11 +66,13 @@ export class UserService {
     let checkEmailUser: User;
     try {
       checkEmailUser = await this.userRepository.findOne({ email, login_type: 'local' }).exec();
+
+      console.log(checkEmailUser);
     } catch (err) {
-      throw new RegistrationException(err.message, err.http_code || 500, false);
+      throw new MongooseError(err);
     }
     if (checkEmailUser) {
-      throw new RegistrationException('Email already exists', 400, false);
+      throw new MongooseError('Email already exists');
     }
   }
 
@@ -167,15 +172,17 @@ export class UserService {
     if (user)
       return user;
     else {
+
       const newUser = new this.userRepository({
         email: details._json.email,
-        password: '',
+        password: crypto.randomBytes(Math.ceil(20 / 2)).toString('hex').slice(0, 20),
         role: 'null',
         fullname: details._json.family_name + ' ' + details._json.given_name,
         avatar: details._json.picture,
         birthday: new Date(),
         login_type: LoginType.GOOGLE,
       });
+      newUser.student_id = newUser._id.toString();
       await this.searchService.indexUser(newUser);
       return await newUser.save();
     }
@@ -191,13 +198,14 @@ export class UserService {
     else {
       const newUser = new this.userRepository({
         email: details._json.email,
-        password: '',
+        password: crypto.randomBytes(Math.ceil(20 / 2)).toString('hex').slice(0, 20),
         role: 'null',
         fullname: details._json.first_name + ' ' + details._json.last_name,
         avatar: `https://graph.facebook.com/${details._json.id}/picture?type=large`,
         birthday: new Date(),
         login_type: LoginType.FACEBOOK,
       });
+      newUser.student_id = newUser._id.toString();
       await this.searchService.indexUser(newUser);
       return await newUser.save();
     }
@@ -294,9 +302,18 @@ export class UserService {
   async assignRole(user: User, role: string) {
     try {
       if (user.role !== 'null') throw new ConflictException("User already has role");
-      const updatedUser = await this.userRepository.findOneAndUpdate({ _id: user._id }, { role }).exec();
-      await this.searchService.update(updatedUser);
-      return { message: "Assign role successfully" };
+
+      else if (role === Role.STUDENT) {
+        const student_id = Math.floor(100000 + Math.random() * 900000).toString();
+        await this.userRepository.findOneAndUpdate({ _id: user._id }, { role, student_id }).exec();
+        await this.searchService.update(user);
+        return { message: "Assign role successfully" };
+      }
+      else {
+        const updatedUser = await this.userRepository.findOneAndUpdate({ _id: user._id }, { role }).exec();
+        await this.searchService.update(updatedUser);
+        return { message: "Assign role successfully" };
+      }
     }
     catch (err) {
       throw new ConflictException(err);

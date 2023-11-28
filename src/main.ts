@@ -1,11 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { setupSwagger } from './utils/swagger';
 import * as session from 'express-session';
 import * as passport from 'passport';
+import { HttpExceptionFilter } from './utils/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -33,12 +34,18 @@ async function bootstrap() {
     }),
   );
 
+  const logger = new Logger('Main')
+
   setupSwagger(app);
 
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.use(helmet());
   app.use(passport.initialize());
   app.use(passport.session());
 
   await app.listen(configService.get<number>('PORT') || 8080);
+  const baseUrl = AppModule.getBaseUrl(app)
+  const url = `http://${baseUrl}:${AppModule.port}`
+  logger.log(`API Documentation available at ${url}`);
 }
 bootstrap();

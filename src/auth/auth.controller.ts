@@ -1,13 +1,12 @@
 import { Controller, Post, UseGuards, Req, Body, HttpCode, HttpStatus, Get, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+import { LocalAuthGuard } from '../utils/guard/authenticate/local-auth.guard';
+import { JwtRefreshGuard } from '../utils/guard/authenticate/jwt-refresh.guard';
 import { CurrentUser } from '../utils/decorator/current-user.decorator';
 import { LoginDto } from './dto/login.dto';
-import { Public } from './guards/public.guard';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
-import { FacebookAuthGuard } from './guards/facebook-auth.guard';
+import { GoogleAuthGuard } from '../utils/guard/authenticate/google-auth.guard';
+import { FacebookAuthGuard } from '../utils/guard/authenticate/facebook-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/utils/schema/user.schema';
 
@@ -21,7 +20,6 @@ export class AuthController {
   ) { }
 
   @HttpCode(HttpStatus.OK)
-  @Public()
   @UseGuards(LocalAuthGuard)
   @Post('local/login')
   async login(
@@ -39,7 +37,6 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Public()
   @Get('google/login')
   @UseGuards(GoogleAuthGuard)
   async googleAuth(@Req() req) {
@@ -47,7 +44,6 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@CurrentUser() currentUser: User, @Res() res): Promise<any> {
@@ -56,7 +52,6 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Public()
   @Get('facebook/login')
   @UseGuards(FacebookAuthGuard)
   async facebookAuth(@Req() req) {

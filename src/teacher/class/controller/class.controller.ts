@@ -3,9 +3,9 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger"
 import { ClassService } from "../service/class.service";
 import { CreateClassDto } from "../dto/createClass.dto";
 import { CacheInterceptor } from "@nestjs/cache-manager";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "src/utils/guard/authenticate/jwt-auth.guard";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
-import { RolesGuard } from "src/utils/authorize/role.guard";
+import { RolesGuard } from "src/utils/guard/authorize/role.guard";
 import { Roles } from "src/utils/decorator/role.decorator";
 import { Role } from "src/utils/enum/role.enum";
 

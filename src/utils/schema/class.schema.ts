@@ -4,17 +4,6 @@ import { AbstractDocument } from "src/utils/database/abstract.schema";
 
 export type ClassDocument = Class & Document;
 
-class GradeComposition extends AbstractDocument {
-    @Prop({ required: [true, "Grade Composition Name Required"], unique: true })
-    gradeCompo_name: string;
-
-    @Prop({ required: [true, "Grade Composition Scale Required"] })
-    gradeCompo_scale: number;
-
-    @Prop({ default: false })
-    is_finalized: boolean;
-}
-
 @Schema({
     toJSON: {
         getters: true,
@@ -22,7 +11,7 @@ class GradeComposition extends AbstractDocument {
     },
     timestamps: true,
 })
-export class Class {
+export class Class extends AbstractDocument {
     @Prop({ required: [true, "Class Name Required"] })
     className: string;
 
@@ -32,8 +21,21 @@ export class Class {
     @Prop({ type: Types.ObjectId, ref: 'User' })
     host: Types.ObjectId;
 
-    @Prop({ type: [GradeComposition], default: [] })
-    grade_compositions: GradeComposition[];
+    @Prop({
+        type: [
+            {
+                gradeCompo_name: { type: String, required: true, unique: true },
+                gradeCompo_scale: { type: Number, required: true },
+                is_finalized: { type: Boolean, default: false },
+            },
+        ],
+        default: [],
+    })
+    grade_compositions: {
+        gradeCompo_name: string;
+        gradeCompo_scale: number;
+        is_finalized: boolean;
+    }[];
 }
 
 export const ClassSchema = SchemaFactory.createForClass(Class);

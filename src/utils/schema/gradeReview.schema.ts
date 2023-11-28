@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document, Types } from "mongoose";
+import { type } from "os";
 import { AbstractDocument } from "src/utils/database/abstract.schema";
+import { Status } from "../enum/status.enum";
 
 export type GradeReviewDocument = GradeReview & Document;
 
@@ -12,11 +14,14 @@ export type GradeReviewDocument = GradeReview & Document;
     timestamps: true,
 })
 export class GradeReview extends AbstractDocument {
-    @Prop({ type: Types.ObjectId, ref: 'GradeComposition' })
-    gradeCompo_id: Types.ObjectId;
+    @Prop({ type: Types.ObjectId, ref: 'Class' })
+    class_id: Types.ObjectId;
 
     @Prop({ type: Types.ObjectId, ref: 'User' })
     student_id: Types.ObjectId;
+
+    @Prop({ required: true })
+    gradeCompo_name: string;
 
     @Prop({ required: true })
     current_grade: number;
@@ -35,8 +40,8 @@ export class GradeReview extends AbstractDocument {
 
     @Prop({ type: Object })
     finalDecision: {
-        status: string,
-        updatedGrade: number
+        status: { type: Status, default: Status.PENDING },
+        updatedGrade: { type: Number, default: 0 }
     };
 }
 

@@ -1,10 +1,13 @@
 import { HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import { CreateGradeCompositionDto } from "../dto/createGradeComposition.dto";
+import { CreateGradeCompositionDto } from "../../dto/createGradeComposition.dto";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { User } from "src/utils/schema/user.schema";
+import { RemoveGradeCompositionDto } from "src/teacher/dto/deleteGradeComposition.dto";
+import { UpdateGradeCompositionDto } from "src/teacher/dto/updateGradeComposition.dto";
+import { SwapGradeCompositionDto } from "src/teacher/dto/swapGradeComposition.dto";
 
 
 @Injectable()
@@ -33,61 +36,111 @@ export class GradeCompositionService {
             this.checkIsHost(user, dto.class_id);
             const classId = new Types.ObjectId(dto.class_id);
 
-            const clazz = await this.classRepository.findOneAndUpdate(
-                { _id: classId },
-                {
-                    $push: {
-                        grade_compositions: {
-                            gradeCompo_name: dto.name,
-                            gradeCompo_scale: dto.scale,
-                        }
-                    }
-                }).exec();
+            const clazz = await this.classRepository.findOne(
+                { _id: classId }).exec();
 
-            return clazz.grade_compositions[clazz.grade_compositions.length - 1];
+            if (!clazz) {
+                return new HttpException("Class not found", HttpStatus.NOT_FOUND);
+            }
+
+            if (clazz.grade_compositions.findIndex((item) => item.gradeCompo_name == dto.name) != -1) {
+                return new HttpException("Grade composition name is duplicated", HttpStatus.BAD_REQUEST);
+            }
+
+            clazz.grade_compositions.push({
+                gradeCompo_name: dto.name,
+                gradeCompo_scale: dto.scale,
+                is_finalized: false
+            });
+
+            clazz.save();
+
+            return {
+                message: "Create GradeComposition successful",
+            };
         }
         catch (err) {
-            return new HttpException("Class not found or Composition Name is duplicated", HttpStatus.NOT_FOUND);
+            return new HttpException(err, HttpStatus.NOT_FOUND);
         }
     }
 
     async getCurentGradeStructure(user: User, classId: string) {
         this.checkInClass(user, classId);
+        try {
+            const clazz = await this.classRepository.findOne({ _id: new Types.ObjectId(classId) }).exec();
+            if (!clazz) {
+                return new HttpException("Class not found", HttpStatus.NOT_FOUND);
+            }
 
-        return await this.classRepository.findOne({ _id: classId }).select("grade_compositions").exec();
+            return clazz.grade_compositions
+        }
+        catch (err) {
+            return new HttpException("Class not found", HttpStatus.NOT_FOUND);
+        }
     }
 
-    async removeGradeCompositions(user: User, classId: string, gradeCompoName: string) {
-        this.checkIsHost(user, classId);
+    async removeGradeCompositions(user: User, dto: RemoveGradeCompositionDto) {
+        this.checkIsHost(user, dto.class_id);
         try {
-            const clazz = await this.classRepository.findOneAndUpdate(
-                { _id: classId },
-                {
-                    $pull: {
-                        grade_compositions: {
-                            gradeCompoName
-                        }
-                    }
-                }).exec();
-            return clazz.grade_compositions;
+            const clazz = await this.classRepository.findOne({ _id: new Types.ObjectId(dto.class_id) }).exec();
+            const index = clazz.grade_compositions.findIndex((item) => item.gradeCompo_name == dto.name);
+            if (index == -1) {
+                return new HttpException("Grade composition not found", HttpStatus.NOT_FOUND);
+            }
+            clazz.grade_compositions.splice(index, 1);
+            return await clazz.save();
         }
         catch (err) {
             return new HttpException("Grade composition not found", HttpStatus.NOT_FOUND);
         }
     }
 
-    async updateGradeCompositions(user: User, dto: CreateGradeCompositionDto, oldName: string) {
-        this.checkIsHost(user, dto.class_id);
+    async updateGradeCompositions(user: User, dto: UpdateGradeCompositionDto) {
+        try {
+            this.checkIsHost(user, dto.class_id);
+            const classId = new Types.ObjectId(dto.class_id);
+            const clazz = await this.classRepository.findOne({ _id: classId }).exec();
+            if (!clazz) {
+                return new HttpException("Class not found", HttpStatus.NOT_FOUND);
+            }
 
-        const clazz = await this.classRepository.findOneAndUpdate(
-            { _id: new Types.ObjectId(dto.class_id), "grade_compositions.gradeCompo_name": oldName },
-            {
-                $set: {
-                    "grade_compositions.$.gradeCompo_name": dto.name,
-                    "grade_compositions.$.gradeCompo_scale": dto.scale,
-                }
-            }).exec();
+            const index = clazz.grade_compositions.findIndex((item) => item.gradeCompo_name == dto.oldName);
+            if (index == -1) {
+                return new HttpException("Grade composition not found", HttpStatus.NOT_FOUND);
+            }
+            clazz.grade_compositions[index].gradeCompo_name = dto.name;
+            clazz.grade_compositions[index].gradeCompo_scale = dto.scale;
 
-        return clazz?.grade_compositions.find(compo => compo.gradeCompo_name === dto.name);
+            return await clazz.save();
+
+        } catch (err) {
+            return new HttpException("Error updating GradeComposition", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async swapGradeCompositions(user: User, dto: SwapGradeCompositionDto) {
+        try {
+            this.checkIsHost(user, dto.class_id);
+            const classId = new Types.ObjectId(dto.class_id);
+            const clazz = await this.classRepository.findOne({ _id: classId }).exec();
+            if (!clazz) {
+                return new HttpException("Class not found", HttpStatus.NOT_FOUND);
+            }
+
+            const index1 = clazz.grade_compositions.findIndex((item) => item.gradeCompo_name == dto.firstName);
+            const index2 = clazz.grade_compositions.findIndex((item) => item.gradeCompo_name == dto.secondName);
+            if (index1 == -1 || index2 == -1) {
+                return new HttpException("Grade composition not found", HttpStatus.NOT_FOUND);
+            }
+
+            const temp = clazz.grade_compositions[index1];
+            clazz.grade_compositions[index1] = clazz.grade_compositions[index2];
+            clazz.grade_compositions[index2] = temp;
+
+            return await clazz.save();
+
+        } catch (err) {
+            return new HttpException("Error updating GradeComposition", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -16,7 +16,6 @@ class Class {
     @Prop({ default: null })
     class_description: string;
 
-    
 }
 
 @Schema({
@@ -27,7 +26,7 @@ class Class {
     timestamps: true,
 })
 export class User extends AbstractDocument {
-    @Prop({ required: true, unique: true })
+    @Prop({ required: true })
     email: string;
 
     @Prop()
@@ -53,6 +52,9 @@ export class User extends AbstractDocument {
 
     @Prop({ default: false })
     is_ban: boolean;
+
+    @Prop({ default: null, unique: true })
+    student_id: string;
 
     @Prop({ type: [Class], default: [] })
     classes: Class[];

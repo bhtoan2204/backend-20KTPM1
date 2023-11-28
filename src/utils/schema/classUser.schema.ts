@@ -4,12 +4,14 @@ import { AbstractDocument } from "src/utils/database/abstract.schema";
 
 export type ClassUserDocument = ClassUser & Document;
 
+
 class Student {
     @Prop({ type: Types.ObjectId, ref: 'User' })
     user_id: Types.ObjectId;
 
     @Prop({ default: null })
     student_id: string;
+
 
 }
 
