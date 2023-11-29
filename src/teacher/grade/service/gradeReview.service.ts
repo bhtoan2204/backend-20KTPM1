@@ -49,7 +49,7 @@ export class GradeReviewService {
             text: dto.comment
         });
 
-        gradeReview.save();
+        await gradeReview.save();
 
         return {
             message: 'Comment grade review successful'
@@ -67,7 +67,7 @@ export class GradeReviewService {
         gradeReview.finalDecision.status = dto.status;
         gradeReview.finalDecision.updatedGrade = dto.updatedGrade;
 
-        gradeReview.save();
+        await gradeReview.save();
 
         // #TODO: update grade of student
 

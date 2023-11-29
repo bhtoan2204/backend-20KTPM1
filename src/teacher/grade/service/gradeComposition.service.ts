@@ -53,7 +53,7 @@ export class GradeCompositionService {
                 is_finalized: false
             });
 
-            clazz.save();
+            await clazz.save();
 
             return {
                 message: "Create GradeComposition successful",

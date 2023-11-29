@@ -13,6 +13,7 @@ import { ClassUserSchema } from 'src/utils/schema/classUser.schema';
 import { UserSchema } from 'src/utils/schema/user.schema';
 import { GradeReviewSchema } from 'src/utils/schema/gradeReview.schema';
 import { StorageModule } from 'src/storage/storage.module';
+import { UserGradeSchema } from 'src/utils/schema/userGrade.schema';
 
 @Module({
     imports: [
@@ -23,6 +24,8 @@ import { StorageModule } from 'src/storage/storage.module';
         MongooseModule.forFeature([{ name: 'ClassUser', schema: ClassUserSchema }]),
         MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
         MongooseModule.forFeature([{ name: 'GradeReview', schema: GradeReviewSchema }]),
+        MongooseModule.forFeature([{ name: 'UserGrade', schema: UserGradeSchema }]),
+        MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     ],
     controllers: [GradeCompositionController, GradeManagementController, GradeReviewController],
     providers: [GradeCompositionService, GradeManagementService, GradeReviewService],

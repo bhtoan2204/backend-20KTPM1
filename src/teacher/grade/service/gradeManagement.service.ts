@@ -95,40 +95,21 @@ export class GradeManagementService {
         return File;
     }
 
-    async uploadListStudentCsv(currentUser: User, classId: string) {
-        this.isClassExist(classId);
-        this.checkIsHost(currentUser, classId);
+    async uploadListStudentCsv(currentUser: User, classId: string, file: Express.Multer.File) {
+        await this.isClassExist(classId);
+        await this.checkIsHost(currentUser, classId);
+        const fileName = await this.storageService.uploadCsv(file, classId);
 
-        this.isClassExist(classId);
-        this.checkInClass(currentUser, classId);
-        const users = await this.getStudentOfClass(classId);
+        await this.classRepository.findOneAndUpdate(
+            { _id: new Types.ObjectId(classId) },
+            {
+                list_student_url: `https://storageclassroom.blob.core.windows.net/upload-file/${fileName}`
+            }, { new: true }).exec();
 
-        let rows = [];
-        users.forEach((user) => {
-            rows.push(Object.values({ Name: user.fullname, Id: user._id }));
-        });
-        let book = new Workbook();
-        let sheet = book.addWorksheet('List Student');
-        rows.unshift(Object.values({ studentName: 'Student Name', studentId: 'Student Id' }));
-        sheet.addRows(rows);
-        this.styleSheet(sheet);
-
-        let File = await new Promise((resolve, rejects) => {
-            tmp.file(
-                {
-                    discardDescriptor: true,
-                    prefix: `MyExcelSheet`,
-                    postfix: '.xlsx',
-                    mode: parseInt('0600', 8),
-                },
-                async (err, file) => {
-                    if (err) throw new BadRequestException(err);
-                    await book.xlsx.writeFile(file);
-                    resolve(file);
-                }
-            );
-        });
-
+        return {
+            message: 'Upload file successful',
+            fileName: fileName
+        };
     }
 
     async showStudentsListxGradesBoard(currentUser: User, classId: string) {

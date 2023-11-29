@@ -52,7 +52,14 @@ export class UserController {
   @HttpCode(HttpStatus.CREATED)
   @Patch('/upload_avatar')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(FileInterceptor('avatar', {
+    fileFilter: (req, file, callback) => {
+      if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Only image files are allowed!'), false);
+    },
+  }))
   async uploadAvatar(@CurrentUser() user: User, @UploadedFile() file: Express.Multer.File) {
     const { _id } = user;
     const fileName = await this.storageService.uploadImage(file);

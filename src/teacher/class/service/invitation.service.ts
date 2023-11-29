@@ -16,14 +16,14 @@ export class InvitationService {
         @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
     ) { }
 
-    async checkIsHost(user: User, classId: string): Promise<any> {
+    async checkIsHost(user: User, classId: Types.ObjectId): Promise<any> {
         const clazz = await this.classRepository.findOne({ _id: classId, host: user._id }).exec();
         if (!clazz) {
             return new HttpException('You are not the host of this class', HttpStatus.FORBIDDEN);
         }
     }
 
-    async checkInClass(user: User, classId: string): Promise<any> {
+    async checkInClass(user: User, classId: Types.ObjectId): Promise<any> {
         const classUser = await this.classUserRepository.findOne(
             {
                 class_id: classId,
@@ -35,15 +35,17 @@ export class InvitationService {
         }
     }
 
-    async getInvitations(user: User, classId: string, req: Request): Promise<any> {
+    async getInvitations(user: User, classid: string, req: Request): Promise<any> {
+        const classId = new Types.ObjectId(classid);
+
         this.checkIsHost(user, classId);
 
         const existingInvitation = await this.invitationRepository.findOne({ class_id: classId });
 
         if (existingInvitation) {
-            return {
-                existingInvitation
-            };
+            existingInvitation.class_token = (Math.random() + 1).toString(36).substring(8);
+
+            return await existingInvitation.save();
         }
 
         const newInvitation = new this.invitationRepository({
@@ -58,35 +60,27 @@ export class InvitationService {
         };
     }
 
-    async joinClass(user: User, classToken: string, classId: string): Promise<any> {
+    async joinClass(user: User, classToken: string, classid: string): Promise<any> {
+        const classId = new Types.ObjectId(classid);
         this.checkInClass(user, classId);
 
         const invitation = await this.invitationRepository.findOne({ class_id: classId, class_token: classToken }).exec();
 
         if (!invitation) return new NotFoundException("Invitation not found");
 
-        const classUser = await this.classUserRepository.findByIdAndUpdate(
-            { class_id: classId },
-            { $push: { teachers: { user_id: user._id } } },
-            { new: true }
+        const classUser = await this.classUserRepository.findOne(
+            { class_id: classId }
         )
-
-        const clazz = await this.classRepository.findOne({ _id: classId }).exec();
-
-        await this.userRepository.findOneAndUpdate(
-            { _id: user._id },
-            {
-                $push: {
-                    classes: {
-                        class_id: classId,
-                        class_name: clazz.className,
-                        class_description: clazz.description,
-                    }
-                }
-            },
-            { new: true }
-        )
-
-        return classUser;
+        if (classUser.teachers.findIndex(teacher => teacher.user_id == user._id) == -1) {
+            classUser.teachers.push({ user_id: user._id });
+            await classUser.save();
+            this.userRepository.findOneAndUpdate({ _id: user._id }, { $push: { classes: { class_id: classId } } }).exec();
+            return {
+                message: 'Join class successfully'
+            };
+        }
+        else {
+            return new HttpException('You are already in this class', HttpStatus.FORBIDDEN);
+        }
     }
 }

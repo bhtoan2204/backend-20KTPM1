@@ -31,6 +31,14 @@ export class StorageService {
         return uniqueFilename;
     }
 
+    async uploadCsv(filename: Express.Multer.File, classId: string) {
+        const curDate = new Date().toISOString().slice(0, 10);
+        const uniqueFilename = classId + curDate + filename.originalname;
+        const blobBlobClient = this.getBlockBlobClient(uniqueFilename);
+        await blobBlobClient.uploadData(filename.buffer);
+        return uniqueFilename;
+    }
+
     async exportToCsvAndUpload(data: any[], filename: string): Promise<string> {
         const csvData = data.map((item) => ({ StudentID: item.StudentID, Fullname: item.Fullname }));
         const csvFilePath = `./${filename}.csv`;

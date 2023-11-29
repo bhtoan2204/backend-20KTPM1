@@ -16,18 +16,19 @@ export class ClassService {
         @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
     ) { }
 
-    async checkInClass(user: User, classId: string): Promise<any> {
+    async checkInClass(user: User, classId: Types.ObjectId): Promise<any> {
         const classUser = await this.classUserRepository.findOne({
             class_id: classId,
-            'teachers.user_id': user._id
         }).exec();
 
-        if (classUser == null) {
+        const check = classUser.teachers.findIndex(teacher => teacher.user_id == user._id);
+
+        if (check === -1) {
             return new HttpException('You are not in this class', HttpStatus.FORBIDDEN);
         }
     }
 
-    async checkIsHost(user: User, classId: string): Promise<any> {
+    async checkIsHost(user: User, classId: Types.ObjectId): Promise<any> {
         const clazz = await this.classRepository.findOne({ _id: classId, host: user._id }).exec();
         if (!clazz) {
             return new HttpException('You are not the host of this class', HttpStatus.FORBIDDEN);
@@ -38,19 +39,37 @@ export class ClassService {
         const newClass = new this.classRepository({
             className: dto.className,
             description: dto.description,
-            host: host._id
+            host: host._id,
         });
-        await newClass.save();
 
-        const newClassUser = new this.classUserRepository({
+        const newClassUser = await this.classUserRepository.create({
             class_id: newClass._id,
             teachers: [{ user_id: host._id }]
-        }).save();
+        });
 
-        return { newClass, newClassUser };
+        const user = await this.userRepository.findOne({ _id: host._id });
+        user.classes.push({
+            class_id: newClass._id,
+            class_name: dto.className,
+            class_description: dto.description
+        });
+
+        await newClass.save();
+        await newClassUser.save();
+        await user.save();
+
+        return {
+            message: "Create class successfully",
+            class: {
+                class_id: newClass._id,
+                class_name: dto.className,
+                class_description: dto.description
+            }
+        };
     }
 
-    async deleteClass(host: User, classId: string): Promise<any> {
+    async deleteClass(host: User, classid: string): Promise<any> {
+        const classId = new Types.ObjectId(classid);
         this.checkIsHost(host, classId);
 
         const clazz = await this.classRepository.findOne({ _id: classId, host: host._id }).exec();
@@ -62,8 +81,21 @@ export class ClassService {
         return new HttpException("Delete class successfully", HttpStatus.OK);
     }
 
-    async getAll(host: User): Promise<any> {
-        const classes = await this.classRepository.find({ host: host._id })
+    async getAll(user: User): Promise<any> {
+        const classIds = user.classes.map(clazz => clazz.class_id);
+        const classes = await this.classRepository.find({ _id: { $in: classIds } })
+            .select('_id className description')
+            .exec();
+
+        if (!classes || classes.length === 0) {
+            return new NotFoundException('No classes found for the given user');
+        }
+
+        return classes;
+    }
+
+    async getJoinedClasses(user: User): Promise<any> {
+        const classes = await this.classRepository.find({ host: user._id })
             .select('_id className description')
             .exec();
 
@@ -74,7 +106,8 @@ export class ClassService {
         return classes;
     }
 
-    async getClassDetail(host: User, classId: string): Promise<any> {
+    async getClassDetail(host: User, classid: string): Promise<any> {
+        const classId = new Types.ObjectId(classid);
         this.checkInClass(host, classId);
 
         const clazz = await this.classRepository.findOne({ _id: classId, host: host._id })
@@ -86,11 +119,14 @@ export class ClassService {
         return clazz;
     }
 
-    async getTeachers(host: User, classId: string): Promise<any> {
-        this.checkInClass(host, classId);
+    async getTeachers(user: User, classid: string): Promise<any> {
+        const classId = new Types.ObjectId(classid);
+
+        this.checkInClass(user, classId);
+
         try {
             const classUsers = await this.classUserRepository.find({ class_id: new Types.ObjectId(classId) });
-            const userIds = classUsers.map(classUser => classUser.students.map(student => student.user_id));
+            const userIds = classUsers.map(classUser => classUser.teachers.map(teachers => teachers.user_id));
             const teachers = await this.userRepository.find({ _id: { $in: userIds } });
             return teachers;
         }
@@ -99,13 +135,13 @@ export class ClassService {
         }
     }
 
-    async getStudents(host: User, classId: string): Promise<any> {
+    async getStudents(host: User, classid: string): Promise<any> {
+        const classId = new Types.ObjectId(classid);
         this.checkInClass(host, classId);
         try {
             const classUsers = await this.classUserRepository.find({ class_id: classId });
             const userIds = classUsers.map(classUser => classUser.students.map(student => student.user_id));
             const students = await this.userRepository.find({ _id: { $in: userIds } });
-
             return students;
         }
         catch (error) {

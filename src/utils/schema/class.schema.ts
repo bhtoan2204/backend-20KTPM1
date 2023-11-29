@@ -21,14 +21,24 @@ export class Class extends AbstractDocument {
     @Prop({ type: Types.ObjectId, ref: 'User' })
     host: Types.ObjectId;
 
+    @Prop({ default: null })
+    list_student_url: string;
+
     @Prop({
         type: [
             {
-                gradeCompo_name: { type: String, required: true, unique: true },
+                gradeCompo_name: { type: String, required: true },
                 gradeCompo_scale: { type: Number, required: true },
                 is_finalized: { type: Boolean, default: false },
             },
         ],
+        validate: {
+            validator: function (gradeCompositions) {
+                const names = gradeCompositions.map(comp => comp.gradeCompo_name);
+                return (new Set(names)).size === names.length;
+            },
+            message: "gradeCompo_name must be unique within the grade_compositions array.",
+        },
         default: [],
     })
     grade_compositions: {

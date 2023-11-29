@@ -66,8 +66,6 @@ export class UserService {
     let checkEmailUser: User;
     try {
       checkEmailUser = await this.userRepository.findOne({ email, login_type: 'local' }).exec();
-
-      console.log(checkEmailUser);
     } catch (err) {
       throw new MongooseError(err);
     }
@@ -250,7 +248,7 @@ export class UserService {
       const otpRecord = await this.registerOtpRepository.findOne({ email }).exec();
       if (otpRecord) {
         otpRecord.otp = otp;
-        otpRecord.save();
+        await otpRecord.save();
       }
       else {
         const newOtp = new this.registerOtpRepository({
@@ -276,7 +274,7 @@ export class UserService {
       const otpRecord = await this.resetOtpRepository.findOne({ email }).exec();
       if (otpRecord) {
         otpRecord.otp = otp;
-        otpRecord.save();
+        await otpRecord.save();
       }
       else {
         const newOtp = new this.resetOtpRepository({
@@ -315,18 +313,9 @@ export class UserService {
   async assignRole(user: User, role: string) {
     try {
       if (user.role !== 'null') throw new ConflictException("User already has role");
-
-      else if (role === Role.STUDENT) {
-        const student_id = Math.floor(100000 + Math.random() * 900000).toString();
-        await this.userRepository.findOneAndUpdate({ _id: user._id }, { role, student_id }).exec();
-        await this.searchService.update(user);
-        return { message: "Assign role successfully" };
-      }
-      else {
-        const updatedUser = await this.userRepository.findOneAndUpdate({ _id: user._id }, { role }).exec();
-        await this.searchService.update(updatedUser);
-        return { message: "Assign role successfully" };
-      }
+      const updatedUser = await this.userRepository.findOneAndUpdate({ _id: user._id }, { role }).exec();
+      await this.searchService.update(updatedUser);
+      return { message: "Assign role successfully" };
     }
     catch (err) {
       throw new ConflictException(err);

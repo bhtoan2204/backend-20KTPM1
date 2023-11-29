@@ -35,6 +35,14 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
+    @UseInterceptors(CacheInterceptor)
+    @Get('/getJoinedClasses')
+    @ApiOperation({ summary: 'Get all classes' })
+    async getJoinedClasses(@CurrentUser() host) {
+        return this.classService.getJoinedClasses(host);
+    }
+
+    @HttpCode(HttpStatus.OK)
     @Get('/classDetail/:classId')
     @ApiOperation({ summary: 'Get class detail' })
     @ApiParam({ name: 'classId', type: String })
