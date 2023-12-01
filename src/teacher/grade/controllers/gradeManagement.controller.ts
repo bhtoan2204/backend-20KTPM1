@@ -1,5 +1,5 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, UseGuards, Res, Header, Body, Post, Patch, UseInterceptors, UploadedFile } from "@nestjs/common";
-import { ApiBearerAuth, ApiParam, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/utils/guard/authenticate/jwt-auth.guard";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
 import { GradeManagementService } from "../service/gradeManagement.service";
@@ -8,6 +8,8 @@ import { RolesGuard } from "src/utils/guard/authorize/role.guard";
 import { Roles } from "src/utils/decorator/role.decorator";
 import { Role } from "src/utils/enum/role.enum";
 import { StorageService } from "src/storage/storage.service";
+import { InputGradeDto } from "src/teacher/dto/inputGrade.dto";
+import { dot } from "node:test/reporters";
 
 @ApiTags('Grade Management for Teacher')
 @Controller('gradeManagement')
@@ -39,6 +41,7 @@ export class GradeManagementController {
         },
     }))
     @ApiParam({ name: 'classId', type: String })
+    @ApiOperation({ summary: 'Upload list of students in a class' })
     @Post('/uploadListStudent/:classId')
     async uploadListStudentCsv(@CurrentUser() user, @Param() params: any, @UploadedFile() file: Express.Multer.File) {
         return this.gradeManagementService.uploadListStudentCsv(user, params.classId, file);
@@ -48,9 +51,12 @@ export class GradeManagementController {
         return this.gradeManagementService.showStudentsListxGradesBoard(user, params.classId);
     }
 
-    async mapStudentIdWithGrade(@CurrentUser() user, @Param() params: any) { }
-
-    async inputGradeForStudentAtSpecificAssignment(@CurrentUser() user, @Param() params: any) { }
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Input grade composition of a student' })
+    @Patch('/inputGradeForStudentAtSpecificAssignment')
+    async inputGradeForStudentAtSpecificAssignment(@CurrentUser() user, @Body() dto: InputGradeDto) {
+        return this.gradeManagementService.inputGradeForStudent(user, dto);
+    }
 
     async downloadTemplateByAssignment(@CurrentUser() user, @Param() params: any) { }
 
@@ -61,9 +67,9 @@ export class GradeManagementController {
     @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)
     @ApiParam({ name: 'classId', type: String })
-    @Get('/exportGradeBoard/:classId')
+    @Get('/exportGradeBoard/:classId/:gradeCompo_name')
     async exportGradeBoard(@CurrentUser() user, @Param() params: any) {
-        const result = await this.gradeManagementService.exportGradeBoard(user, params.classId);
+        const result = await this.gradeManagementService.exportGradeBoard(user, params.classId, params.gradeCompo_name);
         return result
     }
 

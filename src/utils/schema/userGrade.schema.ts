@@ -24,22 +24,22 @@ export class UserGrade extends AbstractDocument {
                 grades: [
                     {
                         gradeCompo_name: { type: String, required: true },
+                        gradeCompo_scale: { type: Number, required: true },
                         current_grade: { type: Number, required: true },
-                        expected_grade: { type: Number, required: true },
                     },
                 ],
             },
         ],
         default: [],
     })
-    class_grades: {
-        grades: {
-            gradeCompo_name: string;
-            gradeCompo_scale: number;
-            current_grade: number;
-        }[];
-        overall_grade: number;
+    grades: {
+        gradeCompo_name: string;
+        gradeCompo_scale: number;
+        current_grade: number;
     }[];
+
+    @Prop({ type: Number, default: null })
+    overall_grade: number;
 }
 
 export const UserGradeSchema = SchemaFactory.createForClass(UserGrade);

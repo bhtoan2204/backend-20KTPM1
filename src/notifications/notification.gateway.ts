@@ -48,7 +48,6 @@ export class NotificationGateway implements OnModuleInit {
     async handleDisconnect(client: Socket) {
         const socketId = client.id;
         this.socketMap.delete(socketId);
-        console.log(`Client disconnected: ${socketId}`);
     }
 
     @SubscribeMessage('newNotification')

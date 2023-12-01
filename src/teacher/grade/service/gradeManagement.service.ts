@@ -8,6 +8,7 @@ import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema"
 import { User, UserDocument } from "src/utils/schema/user.schema";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { UserGrade, UserGradeDocument } from "src/utils/schema/userGrade.schema";
+import { InputGradeDto } from "src/teacher/dto/inputGrade.dto";
 
 @Injectable()
 export class GradeManagementService {
@@ -125,7 +126,7 @@ export class GradeManagementService {
                 const userxgrade = await this.userGradeRepository.findOne({ user_id: user._id, class_id: classId }).exec();
                 const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
                 const studentId = classUser.students.find((student) => student.user_id == user._id).student_id;
-                rows.push(Object.values({ Name: user.fullname, Id: studentId, Grade: userxgrade.class_grades }));
+                rows.push(Object.values({ Name: user.fullname, Id: studentId, Grade: userxgrade.grades }));
             })
 
             return rows;
@@ -135,8 +136,54 @@ export class GradeManagementService {
         }
     }
 
-    async exportGradeBoard(currentUser: User, classId: string) {
+    async inputGradeForStudent(currentUser: User, dto: InputGradeDto) {
+        this.checkInClass(currentUser, dto.class_id);
+        const user = await this.userRepository.findOne({ _id: dto.user_id }).exec();
+        if (!user) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+        const clazz = await this.classRepository.findOne({ _id: dto.class_id }).exec();
+        if (!clazz) {
+            throw new HttpException('Class not found', HttpStatus.NOT_FOUND);
+        }
+        const classUser = await this.classUserRepository.findOne({ class_id: dto.class_id }).exec();
+        const check = classUser.students.find((student) => student.user_id == user._id);
+        if (!check) {
+            throw new HttpException('Student not found', HttpStatus.NOT_FOUND);
+        }
+        const gradeCompo_name = this.userGradeRepository.findOne({ class_id: dto.class_id, user_id: dto.user_id, "class_grades.grades.gradeCompo_name": dto.gradeCompo_name }).exec();
+        if (!gradeCompo_name) {
+            throw new HttpException('Grade composition not found', HttpStatus.NOT_FOUND);
+        }
+        const grade = await this.userGradeRepository.findOneAndUpdate(
+            { class_id: dto.class_id, user_id: dto.user_id, "class_grades.grades.gradeCompo_name": dto.gradeCompo_name },
+            { $set: { "class_grades.$.grades.$.current_grade": dto.input_grade } },
+            { new: true }
+        ).exec();
 
+        return {
+            grade,
+            message: 'Input grade successful'
+        };
+    }
+
+
+    async exportGradeBoard(currentUser: User, classId: string, gradeCompo_name: string) {
+        this.checkInClass(currentUser, classId);
+        const users = await this.getStudentOfClass(classId);
+        let rows = [];
+        users.forEach(async (user) => {
+            const userxgrade = await this.userGradeRepository.findOne({ user_id: user._id, class_id: classId }).exec();
+            const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
+            const studentId = classUser.students.find((student) => student.user_id == user._id).student_id;
+            rows.push(Object.values({ Name: user.fullname, Id: studentId, Grade: userxgrade.grades.find((grade) => grade.gradeCompo_name == gradeCompo_name).current_grade }));
+        })
+        let book = new Workbook();
+        let sheet = book.addWorksheet('List Student');
+        let column = {};
+
+        rows.unshift(Object.values({ studentName: 'Student Name', studentId: 'Student Id' }));
+        sheet.addRows(rows);
     }
 
     async markGradeCompositionAsFinal(currentUser: User, gradeCompositionName: string, classId: string) {

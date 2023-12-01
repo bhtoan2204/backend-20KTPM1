@@ -8,6 +8,7 @@ import { User } from "src/utils/schema/user.schema";
 import { RemoveGradeCompositionDto } from "src/teacher/dto/deleteGradeComposition.dto";
 import { UpdateGradeCompositionDto } from "src/teacher/dto/updateGradeComposition.dto";
 import { SwapGradeCompositionDto } from "src/teacher/dto/swapGradeComposition.dto";
+import { UserGrade, UserGradeDocument } from "src/utils/schema/userGrade.schema";
 
 
 @Injectable()
@@ -15,6 +16,7 @@ export class GradeCompositionService {
     constructor(
         @InjectModel(Class.name) private readonly classRepository: Model<ClassDocument>,
         @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>,
+        @InjectModel(UserGrade.name) private readonly userGradeRepository: Model<UserGradeDocument>,
     ) { }
 
     async checkIsHost(user: User, classId: string): Promise<any> {
@@ -55,6 +57,17 @@ export class GradeCompositionService {
 
             await clazz.save();
 
+            const students = await this.userGradeRepository.find({ class_id: classId }).exec();
+            for (let i = 0; i < students.length; i++) {
+                const newGrade = {
+                    gradeCompo_name: dto.name,
+                    gradeCompo_scale: dto.scale,
+                    current_grade: null,
+                }
+                students[i].grades.push(newGrade);
+                students[i].save();
+            };
+
             return {
                 message: "Create GradeComposition successful",
             };
@@ -88,6 +101,12 @@ export class GradeCompositionService {
                 return new HttpException("Grade composition not found", HttpStatus.NOT_FOUND);
             }
             clazz.grade_compositions.splice(index, 1);
+
+            const students = await this.userGradeRepository.find({ class_id: dto.class_id }).exec();
+            for (let i = 0; i < students.length; i++) {
+                students[i].grades.splice(index, 1);
+            };
+
             return await clazz.save();
         }
         catch (err) {
@@ -110,6 +129,13 @@ export class GradeCompositionService {
             }
             clazz.grade_compositions[index].gradeCompo_name = dto.name;
             clazz.grade_compositions[index].gradeCompo_scale = dto.scale;
+
+            const students = await this.userGradeRepository.find({ class_id: classId }).exec();
+            for (let i = 0; i < students.length; i++) {
+                students[i].grades[index].gradeCompo_name = dto.name;
+                students[i].grades[index].gradeCompo_scale = dto.scale;
+                students[i].save();
+            };
 
             return await clazz.save();
 
@@ -136,6 +162,14 @@ export class GradeCompositionService {
             const temp = clazz.grade_compositions[index1];
             clazz.grade_compositions[index1] = clazz.grade_compositions[index2];
             clazz.grade_compositions[index2] = temp;
+
+            const students = await this.userGradeRepository.find({ class_id: classId }).exec();
+            for (let i = 0; i < students.length; i++) {
+                const temp = students[i].grades[index1];
+                students[i].grades[index1] = students[i].grades[index2];
+                students[i].grades[index2] = temp;
+                students[i].save();
+            };
 
             return await clazz.save();
 
