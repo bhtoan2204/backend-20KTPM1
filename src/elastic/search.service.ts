@@ -21,7 +21,6 @@ export class SearchService {
                 fullname: currentUser.fullname,
                 role: currentUser.role,
                 login_type: currentUser.login_type,
-                student_id: currentUser.student_id.toString(),
             }
         })
     }
@@ -30,14 +29,6 @@ export class SearchService {
         if (!query || typeof query !== 'string') {
             throw new Error('Invalid search query');
         }
-    }
-
-    private buildStudentIdQuery(query: string): any {
-        return {
-            wildcard: {
-                student_id: `*${query}*`,
-            },
-        };
     }
 
     private buildNameQuery(query: string): any {
@@ -68,7 +59,6 @@ export class SearchService {
 
         const nameQuery = this.buildNameQuery(text);
         const emailQuery = this.buildEmailQuery(text);
-        const studentIdQuery = this.buildStudentIdQuery(text);
 
         const { body } = await this.elasticsearchService.search<UserResult>({
             index: this.index,
@@ -78,7 +68,6 @@ export class SearchService {
                         should: [
                             { bool: { must: nameQuery } },
                             { bool: { must: emailQuery } },
-                            { bool: { must: studentIdQuery } },
                         ],
                     }
                 }
@@ -96,7 +85,6 @@ export class SearchService {
             fullname: currentUser.fullname,
             role: currentUser.role,
             login_type: currentUser.login_type,
-            student_id: currentUser.student_id.toString(),
         }
 
         const script = Object.entries(newBody).reduce((result, [key, value]) => {

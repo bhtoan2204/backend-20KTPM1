@@ -54,9 +54,6 @@ export class User extends AbstractDocument {
     @Prop({ default: false })
     is_ban: boolean;
 
-    @Prop({ default: crypto.randomBytes(8).toString('hex'), unique: true })
-    student_id: string;
-
     @Prop({ type: [Class], default: [] })
     classes: Class[];
 }

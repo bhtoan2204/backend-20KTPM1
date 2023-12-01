@@ -9,7 +9,7 @@ class Student {
     @Prop({ type: Types.ObjectId, ref: 'User' })
     user_id: Types.ObjectId;
 
-    @Prop({ default: null })
+    @Prop({ default: null, nullable: true })
     student_id: string;
 }
 

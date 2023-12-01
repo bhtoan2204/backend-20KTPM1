@@ -43,8 +43,6 @@ export class UserService {
         login_type: LoginType.LOCAL,
       });
 
-      newUser.student_id = newUser._id.toString();
-
       await newUser.save();
       await this.searchService.indexUser(newUser);
       await this.registerOtpRepository.deleteOne({ email: createUserDto.email }).exec();
@@ -188,7 +186,6 @@ export class UserService {
         birthday: new Date(),
         login_type: LoginType.GOOGLE,
       });
-      newUser.student_id = newUser._id.toString();
       await this.searchService.indexUser(newUser);
       return await newUser.save();
     }
@@ -216,7 +213,6 @@ export class UserService {
         birthday: new Date(),
         login_type: LoginType.FACEBOOK,
       });
-      newUser.student_id = newUser._id.toString();
       await this.searchService.indexUser(newUser);
       return await newUser.save();
     }

@@ -7,6 +7,7 @@ import { StorageService } from "src/storage/storage.service";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { User, UserDocument } from "src/utils/schema/user.schema";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
+import { UserGrade, UserGradeDocument } from "src/utils/schema/userGrade.schema";
 
 @Injectable()
 export class GradeManagementService {
@@ -14,6 +15,7 @@ export class GradeManagementService {
         @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>,
         @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
         @InjectModel(Class.name) private readonly classRepository: Model<ClassDocument>,
+        @InjectModel(UserGrade.name) private readonly userGradeRepository: Model<UserGradeDocument>,
         @Inject(StorageService) private readonly storageService: StorageService,
     ) { }
 
@@ -67,8 +69,10 @@ export class GradeManagementService {
 
         const users = await this.getStudentOfClass(classId);
         let rows = [];
-        users.forEach((user) => {
-            rows.push(Object.values({ Name: user.fullname, Id: user.student_id }));
+        users.forEach(async (user) => {
+            const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
+            const studentId = classUser.students.find((student) => student.user_id == user._id).student_id;
+            rows.push(Object.values({ Name: user.fullname, Id: studentId }));
         });
         let book = new Workbook();
         let sheet = book.addWorksheet('List Student');
@@ -113,7 +117,22 @@ export class GradeManagementService {
     }
 
     async showStudentsListxGradesBoard(currentUser: User, classId: string) {
+        this.checkInClass(currentUser, classId);
+        try {
+            const users = await this.getStudentOfClass(classId);
+            let rows = [];
+            users.forEach(async (user) => {
+                const userxgrade = await this.userGradeRepository.findOne({ user_id: user._id, class_id: classId }).exec();
+                const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
+                const studentId = classUser.students.find((student) => student.user_id == user._id).student_id;
+                rows.push(Object.values({ Name: user.fullname, Id: studentId, Grade: userxgrade.class_grades }));
+            })
 
+            return rows;
+        }
+        catch (err) {
+            throw new HttpException('Error', HttpStatus.BAD_REQUEST);
+        }
     }
 
     async exportGradeBoard(currentUser: User, classId: string) {

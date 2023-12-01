@@ -15,10 +15,12 @@ export class UserGrade extends AbstractDocument {
     @Prop({ type: Types.ObjectId, ref: 'User', unique: true })
     user_id: Types.ObjectId;
 
+    @Prop({ type: Types.ObjectId, ref: 'Class', unique: true })
+    class_id: Types.ObjectId;
+
     @Prop({
         type: [
             {
-                class_id: { type: Types.ObjectId, ref: 'Class' },
                 grades: [
                     {
                         gradeCompo_name: { type: String, required: true },
@@ -31,12 +33,12 @@ export class UserGrade extends AbstractDocument {
         default: [],
     })
     class_grades: {
-        class_id: Types.ObjectId;
         grades: {
             gradeCompo_name: string;
+            gradeCompo_scale: number;
             current_grade: number;
-            expected_grade: number;
         }[];
+        overall_grade: number;
     }[];
 }
 

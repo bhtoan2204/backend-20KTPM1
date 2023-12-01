@@ -6,10 +6,6 @@ import { IsBoolean, IsNotEmpty, IsString } from "class-validator";
 export class NotificationDto {
     @IsNotEmpty()
     @IsString()
-    sender_id: string;
-
-    @IsNotEmpty()
-    @IsString()
     receiver_id: string;
 
     @IsNotEmpty()
