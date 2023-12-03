@@ -11,12 +11,18 @@ services:
       - DATABASE_USER=root
       - DATABASE_PASS=root
       - DATABASE_URI=mongodb://database:27017
+      - ELASTICSEARCH_NODE=http://esOne:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=changeme
     ports:
       - '8080:8080'
     depends_on:
       - database
+      - esOne
     volumes:
       - ./src:/app/src
+    networks:
+      - elastic
     
   database:
     image: mongo:6.0
@@ -27,3 +33,46 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: classroom
       MONGO_INITDB_ROOT_PASSWORD: root
+    networks:
+      - elastic
+
+  esOne:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.12.0
+    container_name: esOne
+    environment:
+      - node.name=esOne
+      - cluster.name=es-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+      - ELASTICSEARCH_PASSWORD=changeme
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./esData01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - elastic
+  kib01:
+    image: docker.elastic.co/kibana/kibana:7.12.0
+    container_name: kib01
+    ports: 
+      - 5601:5601
+    environment:
+      - ELASTICSEARCH_HOSTS=http://esOne:9200
+    depends_on: 
+      - esOne
+    links: 
+      - esOne
+    networks:
+      - elastic
+
+volumes:
+  esData01:
+  database:
+
+networks: 
+  elastic:

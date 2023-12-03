@@ -1,21 +1,28 @@
-import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatus, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Post, Get, UseGuards, Req, Patch, HttpCode, HttpStatus, UseInterceptors, UploadedFile, Header, Res, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/createUser.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../utils/guard/authenticate/jwt-auth.guard';
 import { TokenPayload } from '../auth/interface/tokenPayload.interface';
-import { CurrentUser } from '../auth/decorator/current-user.decorator';
+import { CurrentUser } from '../utils/decorator/current-user.decorator';
 import { EditProfileDTO } from './dto/editProfile.dto';
-import { User } from './schema/user.schema';
 import { ChangePassworDto } from './dto/changePassword.dto';
-import { sendOTPDto } from '../auth/dto/sendOTP.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { StorageService } from '../storage/storage.service';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
+import { sendOTPDto } from './dto/sendOtp.dto';
+import { RoleDto } from './dto/role.dto';
+import { User } from 'src/utils/schema/user.schema';
 
-@ApiTags('user')
+@ApiTags('User and Profile')
 @Controller('user')
 @ApiBearerAuth()
 export class UserController {
-  constructor(private readonly usersService: UserService) { }
+  constructor(
+    private readonly usersService: UserService,
+    private readonly storageService: StorageService
+  ) { }
 
   @HttpCode(HttpStatus.CREATED)
   @Post('/signup')
@@ -42,11 +49,35 @@ export class UserController {
     return this.usersService.editProfile(_id, dto);
   }
 
+  @HttpCode(HttpStatus.CREATED)
+  @Patch('/upload_avatar')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('avatar', {
+    fileFilter: (req, file, callback) => {
+      if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Only image files are allowed!'), false);
+    },
+  }))
+  async uploadAvatar(@CurrentUser() user: User, @UploadedFile() file: Express.Multer.File) {
+    const { _id } = user;
+    const fileName = await this.storageService.uploadImage(file);
+    return this.usersService.uploadAvatar(_id, fileName);
+  }
+
+  @Get('/get_avatar')
+  @Header('Content-Type', 'image/webp')
+  async readImage(@Res() res, @Query('filename') filename) {
+    const data = await this.storageService.readStream(filename);
+    return data.pipe(res);
+  }
+
   @Patch('/change_password')
   @UseGuards(JwtAuthGuard)
   async changePassword(@CurrentUser() user: User, @Body() dto: ChangePassworDto) {
     const { _id } = user;
-    return this.usersService.changePassword(_id, dto);
+    return this.usersService.updatePassword(_id, dto);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -55,9 +86,22 @@ export class UserController {
     return this.usersService.sendRegisterOTP(dto.email);
   }
 
+  @HttpCode(HttpStatus.CREATED)
+  @Post('send_resetOtp')
+  async sendOTP(@Body() dto: sendOTPDto) {
+    return this.usersService.sendResetOTP(dto.email);
+  }
+
+  @HttpCode(HttpStatus.CREATED)
+  @Post('reset_password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.usersService.resetPassword(dto);
+  }
+
   @HttpCode(HttpStatus.OK)
-  @Get('hello')
-  getHello() {
-    return 'hello';
+  @Patch('/assign-role')
+  @UseGuards(JwtAuthGuard)
+  async assignRole(@CurrentUser() user: User, @Body() dto: RoleDto) {
+    return this.usersService.assignRole(user, dto.role);
   }
 }

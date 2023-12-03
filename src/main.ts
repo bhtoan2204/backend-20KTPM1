@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { setupSwagger } from './utils/swagger';
 import * as session from 'express-session';
@@ -33,6 +33,8 @@ async function bootstrap() {
     }),
   );
 
+  const logger = new Logger('Main')
+
   setupSwagger(app);
 
   app.use(helmet());
@@ -40,5 +42,8 @@ async function bootstrap() {
   app.use(passport.session());
 
   await app.listen(configService.get<number>('PORT') || 8080);
+  const baseUrl = AppModule.getBaseUrl(app)
+  const url = `http://${baseUrl}:${AppModule.port}`
+  logger.log(`API Documentation available at ${url}`);
 }
 bootstrap();

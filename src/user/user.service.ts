@@ -1,23 +1,27 @@
 import { ConflictException, HttpException, HttpStatus, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
-import * as bcrypt from 'bcrypt';
-import { RegistrationException } from './exception/registration.exception';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from './schema/user.schema';
-import { Model } from 'mongoose';
+import { Model, MongooseError } from 'mongoose';
 import { MailService } from '../mail/mail.service';
 import { ChangePassworDto } from './dto/changePassword.dto';
-import { RegisterOtp, RegisterOtpDocument } from './schema/registerOtp.schema';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
+import { LoginType } from 'src/utils/enum/loginType.enum';
+import { User, UserDocument } from 'src/utils/schema/user.schema';
+import { RegisterOtp, RegisterOtpDocument } from 'src/utils/schema/registerOtp.schema';
+import { ResetOtp, ResetOtpDocument } from 'src/utils/schema/resetOtp.schema';
+import { SearchService } from 'src/elastic/search.service';
+import { Role } from 'src/utils/enum/role.enum';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User.name)
-    private userRepository: Model<UserDocument>,
-    @InjectModel(RegisterOtp.name)
-    private registerOtpRepository: Model<RegisterOtpDocument>,
-    @Inject(MailService)
-    private readonly mailService: MailService,
+    @InjectModel(User.name) private userRepository: Model<UserDocument>,
+    @InjectModel(RegisterOtp.name) private registerOtpRepository: Model<RegisterOtpDocument>,
+    @InjectModel(ResetOtp.name) private resetOtpRepository: Model<ResetOtpDocument>,
+    @Inject(MailService) private readonly mailService: MailService,
+    @Inject(SearchService) private readonly searchService: SearchService,
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<any> {
@@ -33,13 +37,14 @@ export class UserService {
       const newUser = new this.userRepository({
         email: createUserDto.email,
         password: hashPassword,
-        role: 'user',
+        role: 'null',
         fullname: createUserDto.fullname,
         birthday: new Date(),
-        login_type: 'local',
+        login_type: LoginType.LOCAL,
       });
 
       await newUser.save();
+      await this.searchService.indexUser(newUser);
       await this.registerOtpRepository.deleteOne({ email: createUserDto.email }).exec();
 
       return {
@@ -51,7 +56,7 @@ export class UserService {
         http_code: HttpStatus.CREATED,
       };
     } catch (err) {
-      throw new RegistrationException(err.message, err.http_code || 500, false);
+      throw new Error(err.message, err.http_code || 500);
     }
   }
 
@@ -60,26 +65,10 @@ export class UserService {
     try {
       checkEmailUser = await this.userRepository.findOne({ email, login_type: 'local' }).exec();
     } catch (err) {
-      throw new RegistrationException(err.message, err.http_code || 500, false);
+      throw new MongooseError(err);
     }
     if (checkEmailUser) {
-      throw new RegistrationException('Email already exists', 400, false);
-    }
-  }
-
-  async findOne(email: string, password: string): Promise<User | undefined> {
-    try {
-      const user = await this.userRepository.findOne({
-        where: { email },
-      });
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (user && isMatch) {
-        return user;
-      } else {
-        throw new Error(`User not found`);
-      }
-    } catch (err) {
-      throw new NotFoundException(err.message);
+      throw new MongooseError('Email already exists');
     }
   }
 
@@ -102,14 +91,18 @@ export class UserService {
     const passwordIsValid = await bcrypt.compare(password, user.password);
     if (!passwordIsValid) {
       throw new UnauthorizedException('Credentials are not valid.');
-    } else {
+    }
+    if (user.is_ban === true) {
+      throw new UnauthorizedException('Your account has been banned.');
+    }
+    else {
       return user;
     };
   }
 
-  async checkExist(email: string): Promise<any> {
+  async checkExistForReset(email: string): Promise<any> {
     const user = await this.userRepository.findOne({ email }).exec();
-    if (user) throw new HttpException('This Email is already created', HttpStatus.CONFLICT);
+    if (!user) throw new HttpException('Email Not Found', HttpStatus.NOT_FOUND);
   }
 
   async checkExistLocal(email): Promise<any> {
@@ -130,7 +123,26 @@ export class UserService {
 
       user.fullname = dto.fullname;
       user.birthday = dto.birthday;
+
+      await this.searchService.update(user);
+
       return { message: "Update profile successfully" }
+    }
+    catch (err) {
+      throw err;
+    }
+  }
+
+  async uploadAvatar(_id: any, fileName: string): Promise<any> {
+    try {
+      await this.userRepository.findOneAndUpdate({ _id }, {
+        avatar: `https://storageclassroom.blob.core.windows.net/upload-file/${fileName}`,
+      }, { new: true }).exec();
+
+      return {
+        message: "Upload avatar successfully",
+        avatar: `https://storageclassroom.blob.core.windows.net/upload-file/${fileName}`
+      };
     }
     catch (err) {
       throw err;
@@ -154,21 +166,27 @@ export class UserService {
   async validateGoogleUser(details: any) {
     const user = await this.userRepository.findOne({
       email: details._json.email,
-      login_type: 'google'
+      login_type: LoginType.GOOGLE
     }).exec();
 
-    if (user)
+    if (user) {
+      if (user.is_ban === true) {
+        throw new UnauthorizedException('Your account has been banned.');
+      }
       return user;
+    }
     else {
+
       const newUser = new this.userRepository({
         email: details._json.email,
-        password: '',
-        role: 'user',
+        password: crypto.randomBytes(Math.ceil(20 / 2)).toString('hex').slice(0, 20),
+        role: 'null',
         fullname: details._json.family_name + ' ' + details._json.given_name,
         avatar: details._json.picture,
         birthday: new Date(),
-        login_type: 'google',
+        login_type: LoginType.GOOGLE,
       });
+      await this.searchService.indexUser(newUser);
       return await newUser.save();
     }
   }
@@ -176,22 +194,26 @@ export class UserService {
   async validateFacebookUser(details: any) {
     const user = await this.userRepository.findOne({
       email: details._json.email,
-      login_type: 'facebook'
+      login_type: LoginType.FACEBOOK
     }).exec();
 
-    console.log(details._json);
-
-    if (user) return user;
+    if (user) {
+      if (user.is_ban === true) {
+        throw new UnauthorizedException('Your account has been banned.');
+      }
+      return user;
+    }
     else {
       const newUser = new this.userRepository({
         email: details._json.email,
-        password: '',
-        role: 'user',
+        password: crypto.randomBytes(Math.ceil(20 / 2)).toString('hex').slice(0, 20),
+        role: 'null',
         fullname: details._json.first_name + ' ' + details._json.last_name,
         avatar: `https://graph.facebook.com/${details._json.id}/picture?type=large`,
         birthday: new Date(),
-        login_type: 'facebook',
+        login_type: LoginType.FACEBOOK,
       });
+      await this.searchService.indexUser(newUser);
       return await newUser.save();
     }
   }
@@ -200,28 +222,13 @@ export class UserService {
     return await this.userRepository.findOne({ _id }).exec();
   }
 
-  async changePassword(_id: any, dto: ChangePassworDto): Promise<any> {
+  async updatePassword(_id: any, dto: ChangePassworDto) {
     if (dto.password !== dto.rewrite_password) {
-      throw new Error('New password must be different from old password');
+      throw new Error('Two password are not match');
     }
-    else {
-      const hashPassword = await bcrypt.hash(dto.password, 10);
-      await this.userRepository.findOneAndUpdate(
-        { _id },
-        {
-          password: hashPassword,
-        },
-      ).exec();
-      return {
-        message: "Change password successfully"
-      }
-    }
-  }
-
-  async updatePassword(email: string, password: string) {
-    const hashPassword = await bcrypt.hash(password, 10);
+    const hashPassword = await bcrypt.hash(dto.password, 10);
     await this.userRepository.findOneAndUpdate(
-      { email },
+      { _id },
       {
         password: hashPassword,
       },
@@ -237,7 +244,7 @@ export class UserService {
       const otpRecord = await this.registerOtpRepository.findOne({ email }).exec();
       if (otpRecord) {
         otpRecord.otp = otp;
-        otpRecord.save();
+        await otpRecord.save();
       }
       else {
         const newOtp = new this.registerOtpRepository({
@@ -255,7 +262,59 @@ export class UserService {
     }
   }
 
-  async getUsersByIds(userIds: any): Promise<User[]> {
-    return await this.userRepository.find({ _id: { $in: userIds } });
+  async sendResetOTP(email: string) {
+    try {
+      await this.checkExistForReset(email);
+
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      const otpRecord = await this.resetOtpRepository.findOne({ email }).exec();
+      if (otpRecord) {
+        otpRecord.otp = otp;
+        await otpRecord.save();
+      }
+      else {
+        const newOtp = new this.resetOtpRepository({
+          email,
+          otp,
+        });
+        await newOtp.save();
+      }
+      const title = "Reset your password";
+      await this.mailService.sendOtp(email, otp, title);
+      return { message: "OTP sent" };
+    }
+    catch (err) {
+      throw new ConflictException(err);
+    }
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const otpRecord = await this.resetOtpRepository.findOne({ email: dto.email }).exec();
+    if (otpRecord.otp !== dto.otp) throw new ConflictException("OTP not match");
+    if (dto.password !== dto.rewrite_password) throw new ConflictException("Password and confirm password not match");
+
+    try {
+      await this.userRepository.findOneAndUpdate(
+        { email: dto.email, login_type: LoginType.LOCAL },
+        { password: await bcrypt.hash(dto.password, 10) }).exec();
+
+      await this.resetOtpRepository.deleteOne({ email: dto.email }).exec();
+      return { message: "Reset password successfully" };
+    }
+    catch (err) {
+      throw new ConflictException({ err, status: HttpStatus.CONFLICT });
+    }
+  }
+
+  async assignRole(user: User, role: string) {
+    try {
+      if (user.role !== 'null') throw new ConflictException("User already has role");
+      const updatedUser = await this.userRepository.findOneAndUpdate({ _id: user._id }, { role }).exec();
+      await this.searchService.update(updatedUser);
+      return { message: "Assign role successfully" };
+    }
+    catch (err) {
+      throw new ConflictException(err);
+    }
   }
 }
