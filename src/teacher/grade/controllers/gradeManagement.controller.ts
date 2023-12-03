@@ -47,6 +47,10 @@ export class GradeManagementController {
         return this.gradeManagementService.uploadListStudentCsv(user, params.classId, file);
     }
 
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Show grade composition of a class' })
+    @ApiParam({ name: 'classId', type: String })
+    @Get('/showGradeOfStudent/:classId')
     async showStudentsListxGradesBoard(@CurrentUser() user, @Param() params: any) {
         return this.gradeManagementService.showStudentsListxGradesBoard(user, params.classId);
     }
@@ -58,7 +62,16 @@ export class GradeManagementController {
         return this.gradeManagementService.inputGradeForStudent(user, dto);
     }
 
-    async downloadTemplateByAssignment(@CurrentUser() user, @Param() params: any) { }
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Show grade composition of a class' })
+    @Get('/downloadTemplateByAssignment/:classId/:gradeCompo_name')
+    @ApiParam({ name: 'classId', type: String })
+    @ApiParam({ name: 'gradeCompo_name', type: String })
+    @Header('Content-Type', 'text/xlsx')
+    async downloadTemplateByAssignment(@CurrentUser() user, @Param() params: any, @Res() res) {
+        const result = await this.gradeManagementService.downloadTemplateByAssignment(user, params.classId, params.gradeCompo_name);
+        res.download(`${result}`);
+    }
 
     async uploadGradeByAssignment(@CurrentUser() user, @Param() params: any) { }
 

@@ -3,7 +3,6 @@ import { Document, Types } from "mongoose";
 import { AbstractDocument } from "../../utils/database/abstract.schema";
 import { Role } from "src/utils/enum/role.enum";
 import { LoginType } from "src/utils/enum/loginType.enum";
-import * as crypto from 'crypto';
 
 export type UserDocument = User & Document;
 

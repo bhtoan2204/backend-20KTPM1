@@ -12,10 +12,10 @@ export type UserGradeDocument = UserGrade & Document;
     timestamps: true,
 })
 export class UserGrade extends AbstractDocument {
-    @Prop({ type: Types.ObjectId, ref: 'User', unique: true })
+    @Prop({ type: Types.ObjectId, ref: 'User' })
     user_id: Types.ObjectId;
 
-    @Prop({ type: Types.ObjectId, ref: 'Class', unique: true })
+    @Prop({ type: Types.ObjectId, ref: 'Class' })
     class_id: Types.ObjectId;
 
     @Prop({

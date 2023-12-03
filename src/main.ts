@@ -6,7 +6,6 @@ import helmet from 'helmet';
 import { setupSwagger } from './utils/swagger';
 import * as session from 'express-session';
 import * as passport from 'passport';
-import { HttpExceptionFilter } from './utils/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -38,7 +37,6 @@ async function bootstrap() {
 
   setupSwagger(app);
 
-  app.useGlobalFilters(new HttpExceptionFilter());
   app.use(helmet());
   app.use(passport.initialize());
   app.use(passport.session());

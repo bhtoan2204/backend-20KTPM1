@@ -20,7 +20,7 @@ export class GradeManagementService {
         @Inject(StorageService) private readonly storageService: StorageService,
     ) { }
 
-    async checkIsHost(user: User, classId: string): Promise<any> {
+    async checkIsHost(user: User, classId: Types.ObjectId): Promise<any> {
         const clazz = await this.classRepository.findOne({ _id: classId, host: user._id }).exec();
         if (!clazz) {
             return new HttpException('You are not the host of this class', HttpStatus.FORBIDDEN);
@@ -41,14 +41,14 @@ export class GradeManagementService {
         };
     }
 
-    private async checkInClass(user: User, classId: string): Promise<any> {
-        const classUser = await this.classUserRepository.findOne({ user_id: user._id, class_id: new Types.ObjectId(classId) }).exec();
+    private async checkInClass(user: User, classId: Types.ObjectId): Promise<any> {
+        const classUser = await this.classUserRepository.findOne({ user_id: user._id, class_id: classId }).exec();
         if (classUser == null) {
             return new HttpException('You are not in this class', HttpStatus.FORBIDDEN);
         }
     }
 
-    private async getStudentOfClass(classId: string): Promise<User[]> {
+    private async getStudentOfClass(classId: Types.ObjectId): Promise<User[]> {
         const classUser = await this.classUserRepository.find({ class_id: classId }).exec();
         if (classUser == null) {
             throw new HttpException('Class not found', HttpStatus.NOT_FOUND);
@@ -58,16 +58,17 @@ export class GradeManagementService {
         return users;
     }
 
-    private async isClassExist(classId: string): Promise<any> {
+    private async isClassExist(classId: Types.ObjectId): Promise<any> {
         const clazz = await this.classRepository.findOne({ _id: classId }).exec();
         if (!clazz) {
             throw new HttpException('Class not found', HttpStatus.NOT_FOUND);
         }
     }
 
-    async downloadListStudentTemplate(currentUser: User, classId: string) {
-        this.checkInClass(currentUser, classId);
+    async downloadListStudentTemplate(currentUser: User, classid: string) {
+        const classId = new Types.ObjectId(classid);
 
+        this.checkInClass(currentUser, classId);
         const users = await this.getStudentOfClass(classId);
         let rows = [];
         users.forEach(async (user) => {
@@ -100,10 +101,11 @@ export class GradeManagementService {
         return File;
     }
 
-    async uploadListStudentCsv(currentUser: User, classId: string, file: Express.Multer.File) {
+    async uploadListStudentCsv(currentUser: User, classid: string, file: Express.Multer.File) {
+        const classId = new Types.ObjectId(classid);
         await this.isClassExist(classId);
         await this.checkIsHost(currentUser, classId);
-        const fileName = await this.storageService.uploadCsv(file, classId);
+        const fileName = await this.storageService.uploadCsv(file, classid);
 
         await this.classRepository.findOneAndUpdate(
             { _id: new Types.ObjectId(classId) },
@@ -117,7 +119,8 @@ export class GradeManagementService {
         };
     }
 
-    async showStudentsListxGradesBoard(currentUser: User, classId: string) {
+    async showStudentsListxGradesBoard(currentUser: User, classid: string) {
+        const classId = new Types.ObjectId(classid);
         this.checkInClass(currentUser, classId);
         try {
             const users = await this.getStudentOfClass(classId);
@@ -137,16 +140,19 @@ export class GradeManagementService {
     }
 
     async inputGradeForStudent(currentUser: User, dto: InputGradeDto) {
-        this.checkInClass(currentUser, dto.class_id);
-        const user = await this.userRepository.findOne({ _id: dto.user_id }).exec();
+        const classId = new Types.ObjectId(dto.class_id);
+        const userId = new Types.ObjectId(dto.user_id);
+        this.checkInClass(currentUser, classId);
+
+        const user = await this.userRepository.findOne({ _id: userId }).exec();
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
         }
-        const clazz = await this.classRepository.findOne({ _id: dto.class_id }).exec();
+        const clazz = await this.classRepository.findOne({ _id: classId }).exec();
         if (!clazz) {
             throw new HttpException('Class not found', HttpStatus.NOT_FOUND);
         }
-        const classUser = await this.classUserRepository.findOne({ class_id: dto.class_id }).exec();
+        const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
         const check = classUser.students.find((student) => student.user_id == user._id);
         if (!check) {
             throw new HttpException('Student not found', HttpStatus.NOT_FOUND);
@@ -167,8 +173,47 @@ export class GradeManagementService {
         };
     }
 
+    async downloadTemplateByAssignment(currentUser: User, classid: string, gradeCompo_name: string) {
+        const classId = new Types.ObjectId(classid);
+        this.checkInClass(currentUser, classId);
+        const users = await this.getStudentOfClass(classId);
+        let rows = [];
+        users.forEach(async (user) => {
+            const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
+            const studentId = classUser.students.find((student) => student.user_id == user._id).student_id;
+            const gradeCompo = await this.userGradeRepository.findOne({ class_id: classId, user_id: user._id }).exec();
+            const current_grade = gradeCompo.grades.find((grade) => grade.gradeCompo_name == gradeCompo_name).current_grade;
+            rows.push(Object.values({ Name: user.fullname, Id: studentId, Grade: current_grade }));
+        })
 
-    async exportGradeBoard(currentUser: User, classId: string, gradeCompo_name: string) {
+        let book = new Workbook();
+        let sheet = book.addWorksheet('List Student with Assignment grade');
+        rows.unshift(Object.values({ studentName: 'Student Name', studentId: 'Student Id', gradeCompo_name: gradeCompo_name }));
+        sheet.addRows(rows);
+        this.styleSheet(sheet);
+
+        let File = await new Promise((resolve, rejects) => {
+            tmp.file(
+                {
+                    discardDescriptor: true,
+                    prefix: `StudentGrade${gradeCompo_name}`,
+                    postfix: '.xlsx',
+                    mode: parseInt('0600', 8),
+                },
+                async (err, file) => {
+                    if (err) throw new BadRequestException(err);
+                    await book.xlsx.writeFile(file);
+                    resolve(file);
+                }
+            );
+        });
+
+        return File;
+    }
+
+
+    async exportGradeBoard(currentUser: User, classid: string, gradeCompo_name: string) {
+        const classId = new Types.ObjectId(classid);
         this.checkInClass(currentUser, classId);
         const users = await this.getStudentOfClass(classId);
         let rows = [];
@@ -186,7 +231,8 @@ export class GradeManagementService {
         sheet.addRows(rows);
     }
 
-    async markGradeCompositionAsFinal(currentUser: User, gradeCompositionName: string, classId: string) {
+    async markGradeCompositionAsFinal(currentUser: User, gradeCompositionName: string, classid: string) {
+        const classId = new Types.ObjectId(classid);
         this.checkInClass(currentUser, classId);
 
         const clazz = await this.classRepository.findOneAndUpdate(

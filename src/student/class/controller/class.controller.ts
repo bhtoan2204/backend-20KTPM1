@@ -22,7 +22,7 @@ export class ClassController {
     @ApiOperation({ summary: 'Join class' })
     @ApiParam({ name: 'classId', type: String })
     async joinClassByCode(@CurrentUser() user, @Param() params: any) {
-        return this.classService.joinClassByCode(user, params.classId);
+        return this.classService.joinClassByClassId(user, params.classId);
     }
 
     @HttpCode(HttpStatus.OK)
@@ -43,6 +43,7 @@ export class ClassController {
 
     @HttpCode(HttpStatus.OK)
     @Get('getGradeStructure/:classId')
+    @ApiParam({ name: 'classId', type: String })
     @ApiOperation({ summary: 'Get grade structure' })
     async viewGradeStructure(@CurrentUser() user, @Param() params: any) {
         return this.classService.viewGradeStructure(user, params.classId);
@@ -50,6 +51,7 @@ export class ClassController {
 
     @HttpCode(HttpStatus.OK)
     @Get('viewClassMembers/:classId')
+    @ApiParam({ name: 'classId', type: String })
     @ApiOperation({ summary: 'View class members' })
     async viewClassMembers(@CurrentUser() user, @Param() params: any) {
         return this.classService.viewClassMembers(user, params.classId);
@@ -57,6 +59,7 @@ export class ClassController {
 
     @HttpCode(HttpStatus.OK)
     @Get('viewClassTeachers/:classId')
+    @ApiParam({ name: 'classId', type: String })
     @ApiOperation({ summary: 'View class members' })
     async viewClassTeachers(@CurrentUser() user, @Param() params: any) {
         return this.classService.viewClassTeachers(user, params.classId);
