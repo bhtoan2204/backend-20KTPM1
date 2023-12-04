@@ -10,11 +10,9 @@ export class NotificationDto {
 
     @IsNotEmpty()
     @IsString()
-    @Prop({ required: true })
     title: string;
 
     @IsString()
-    @Prop({ required: true })
     content: string;
 
     @IsNotEmpty()

@@ -40,8 +40,8 @@ export class GradeReview extends AbstractDocument {
 
     @Prop({ type: Object })
     finalDecision: {
-        status: { type: Status, default: Status.PENDING },
-        updatedGrade: { type: Number, default: 0 }
+        status: string,
+        updatedGrade: number
     };
 }
 
