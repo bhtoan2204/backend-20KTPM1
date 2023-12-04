@@ -7,6 +7,7 @@ import { UserService } from "src/user/user.service";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { User, UserDocument } from "src/utils/schema/user.schema";
+import { UserGrade, UserGradeDocument } from "src/utils/schema/userGrade.schema";
 
 @Injectable()
 export class ClassService {
@@ -14,6 +15,7 @@ export class ClassService {
         @InjectModel(Class.name) private readonly classRepository: Model<ClassDocument>,
         @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>,
         @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
+        @InjectModel(UserGrade.name) private readonly userGradeRepository: Model<UserGradeDocument>,
     ) { }
 
     async checkInClass(user: User, classId: Types.ObjectId): Promise<any> {
@@ -77,6 +79,13 @@ export class ClassService {
 
         await this.classRepository.findOneAndDelete({ _id: classId, host: host._id }).exec();
         await this.classUserRepository.findOneAndDelete({ class_id: classId }).exec();
+        await this.userGradeRepository.deleteMany({ class_id: classId }).exec();
+        const users = await this.userRepository.find({ classes: { $elemMatch: { class_id: classId } } }).exec();
+        users.forEach(async user => {
+            const index = user.classes.findIndex(clazz => clazz.class_id == classId);
+            user.classes.splice(index, 1);
+            await user.save();
+        });
 
         return new HttpException("Delete class successfully", HttpStatus.OK);
     }

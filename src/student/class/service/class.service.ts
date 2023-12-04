@@ -92,6 +92,7 @@ export class ClassService {
         const clazz = await this.classRepository.findOne({ _id: classId }).exec();
 
         const updatedUser = await this.userRepository.findOne({ _id: user._id })
+
         updatedUser.classes.push({
             class_id: classId,
             class_name: clazz.className,
@@ -105,13 +106,13 @@ export class ClassService {
             current_grade: null,
         }));
 
-        console.log(grades);
-
         const newUserGrade = {
             user_id: user._id,
-            classId: classId,
+            class_id: classId,
             grades: grades,
         }
+        console.log
+
         await this.userGradeRepository.create(newUserGrade);
 
         return { message: "Join class successfully" };
