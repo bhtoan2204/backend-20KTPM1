@@ -9,6 +9,7 @@ import { ClassSchema } from 'src/utils/schema/class.schema';
 import { InvitationSchema } from 'src/utils/schema/invitation.schema';
 import { ClassUserSchema } from 'src/utils/schema/classUser.schema';
 import { UserSchema } from 'src/utils/schema/user.schema';
+import { UserGradeSchema } from 'src/utils/schema/userGrade.schema';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { UserSchema } from 'src/utils/schema/user.schema';
         MongooseModule.forFeature([{ name: 'Invitation', schema: InvitationSchema }]),
         MongooseModule.forFeature([{ name: 'ClassUser', schema: ClassUserSchema }]),
         MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+        MongooseModule.forFeature([{ name: 'UserGrade', schema: UserGradeSchema }]),
     ],
     controllers: [ClassController, InvitationController],
     providers: [ClassService, InvitationService],

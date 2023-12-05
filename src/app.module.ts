@@ -13,8 +13,8 @@ import { AdminModule } from './admin/admin.module';
 import { NotificationModule } from './notifications/notification.module';
 import { RouteModule } from './route/route.module';
 import { validateSchemaConfig } from './utils/config/validateSchema.config';
-import { cacheConfig } from './utils/config/cache.config';
 import { DatabaseModule } from './database/database.module';
+import { LocalCacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -32,7 +32,7 @@ import { DatabaseModule } from './database/database.module';
     NotificationModule,
     PassportModule.register({ session: true }),
     RouteModule,
-    CacheModule.register(cacheConfig),
+    //LocalCacheModule,
     DatabaseModule,
   ],
   controllers: [AppController],

@@ -19,6 +19,11 @@ services:
     depends_on:
       - database
       - esOne
+      - redis
+    links:
+      - database
+      - esOne
+      - redis
     volumes:
       - ./src:/app/src
     networks:
@@ -56,23 +61,21 @@ services:
       - 9200:9200
     networks:
       - elastic
-  kib01:
-    image: docker.elastic.co/kibana/kibana:7.12.0
-    container_name: kib01
-    ports: 
-      - 5601:5601
-    environment:
-      - ELASTICSEARCH_HOSTS=http://esOne:9200
-    depends_on: 
-      - esOne
-    links: 
-      - esOne
-    networks:
-      - elastic
+      
+  redis:
+    image: redis
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASS"
+    env_file:
+      - .env.development
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis/data:/data
 
 volumes:
   esData01:
   database:
+  cache:
 
 networks: 
   elastic:

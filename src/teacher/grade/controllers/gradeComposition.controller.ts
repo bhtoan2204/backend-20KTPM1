@@ -29,7 +29,7 @@ export class GradeCompositionController {
     }
 
     @HttpCode(HttpStatus.CREATED)
-    @UseInterceptors(CacheInterceptor)
+    // @UseInterceptors(CacheInterceptor)
     @ApiParam({ name: 'classId', type: String })
     @Get('/getCurentGradeStructure/:classId')
     async getCurentGradeStructure(@CurrentUser() user, @Param() params: any) {

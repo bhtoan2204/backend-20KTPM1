@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNotEmpty, IsString } from "class-validator";
-import { Status } from "src/utils/enum/status.enum";
+import { RealStatus } from "src/utils/enum/realStatus.enum";
 
 export class MarkFinalDescistionDto {
     @ApiProperty({
@@ -8,18 +8,12 @@ export class MarkFinalDescistionDto {
     })
     @IsNotEmpty()
     @IsString()
-    grade_review_id: string;
+    gradeReview_id: string;
 
     @ApiProperty({
         description: 'approved or rejected',
         example: 'Pass'
     })
-    @IsEnum(Status)
-    status: Status;
-
-    @ApiProperty({
-        description: 'Updated grade',
-        example: 19
-    })
-    updatedGrade: number;
+    @IsEnum(RealStatus)
+    status: RealStatus;
 }
