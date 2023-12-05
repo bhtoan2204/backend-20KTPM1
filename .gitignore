@@ -39,3 +39,4 @@ lerna-debug.log*
 .env.production
 
 /esData01
+/redis
