@@ -7,14 +7,29 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     imports: [
         ElasticsearchModule.registerAsync({
             imports: [ConfigModule],
-            useFactory: async (configService: ConfigService) => ({
-                node: configService.get<string>('ELASTICSEARCH_NODE'),
-                auth: {
-                    username: configService.get<string>('ELASTICSEARCH_USERNAME'),
-                    password: configService.get<string>('ELASTICSEARCH_PASSWORD'),
+            useFactory: async (configService: ConfigService) => {
+                const isProduction = configService.get<string>('NODE_ENV') === 'production';
+                if (isProduction) {
+                    return {
+                        cloud: {
+                            id: configService.get<string>('ELASTICSEARCH_NODE'),
+                        },
+                        auth: {
+                            username: configService.get<string>('ELASTICSEARCH_USERNAME'),
+                            password: configService.get<string>('ELASTICSEARCH_PASSWORD'),
+                        },
+                    };
+                } else {
+                    return {
+                        node: configService.get<string>('ELASTICSEARCH_NODE'),
+                        auth: {
+                            username: configService.get<string>('ELASTICSEARCH_USERNAME'),
+                            password: configService.get<string>('ELASTICSEARCH_PASSWORD'),
+                        },
+                    };
                 }
-            }),
-            inject: [ConfigService]
+            },
+            inject: [ConfigService],
         }),
     ],
     providers: [SearchService],
