@@ -35,7 +35,7 @@ export class UserController {
   @Get('/profile')
   @ApiOperation({ summary: 'Get user profile' })
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(CacheInterceptor)
+  // @UseInterceptors(CacheInterceptor)
   async getProfile(@Req() request) {
     const { _id } = request.user as TokenPayload;
     return (await this.usersService.getUserById(_id)).toJSON();

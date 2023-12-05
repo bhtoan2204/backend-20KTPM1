@@ -32,7 +32,7 @@ import { LocalCacheModule } from './cache/cache.module';
     NotificationModule,
     PassportModule.register({ session: true }),
     RouteModule,
-    LocalCacheModule,
+    //LocalCacheModule,
     DatabaseModule,
   ],
   controllers: [AppController],

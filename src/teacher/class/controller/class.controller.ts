@@ -27,7 +27,7 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @UseInterceptors(CacheInterceptor)
+    // @UseInterceptors(CacheInterceptor)
     @Get('/getAll')
     @ApiOperation({ summary: 'Get all classes' })
     async getAll(@CurrentUser() host) {
@@ -35,7 +35,7 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @UseInterceptors(CacheInterceptor)
+    // @UseInterceptors(CacheInterceptor)
     @Get('/getJoinedClasses')
     @ApiOperation({ summary: 'Get all classes' })
     async getJoinedClasses(@CurrentUser() host) {
@@ -58,7 +58,7 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @UseInterceptors(CacheInterceptor)
+    // @UseInterceptors(CacheInterceptor)
     @Get('/getTeachers/:classId')
     @ApiOperation({ summary: 'Get teacher of class' })
     @ApiParam({ name: 'classId', type: String })
@@ -67,7 +67,7 @@ export class ClassController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @UseInterceptors(CacheInterceptor)
+    // @UseInterceptors(CacheInterceptor)
     @Get('/getStudents/:classId')
     @ApiOperation({ summary: 'Get students of class' })
     @ApiParam({ name: 'classId', type: String })
