@@ -1,8 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 import { IsValidObjectId } from "src/utils/customValidator/isValidObjectId.validator";
 
-export class SwapGradeCompositionDto {
+export class MapStudentIdDto {
     @ApiProperty({
         description: 'Class id'
     })
@@ -12,16 +12,17 @@ export class SwapGradeCompositionDto {
     class_id: string;
 
     @ApiProperty({
-        description: 'First name'
+        description: 'User id'
     })
     @IsNotEmpty()
     @IsString()
-    firstName: string;
+    @IsValidObjectId()
+    user_id: string;
 
     @ApiProperty({
-        description: 'Second name'
+        description: 'Student id',
     })
     @IsNotEmpty()
     @IsString()
-    secondName: string;
+    new_studentId: string;
 }

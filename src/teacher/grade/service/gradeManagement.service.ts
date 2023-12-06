@@ -9,6 +9,7 @@ import { User, UserDocument } from "src/utils/schema/user.schema";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { UserGrade, UserGradeDocument } from "src/utils/schema/userGrade.schema";
 import { InputGradeDto } from "src/teacher/dto/inputGrade.dto";
+import { MapStudentIdDto } from "src/teacher/dto/mapStudentId.dto";
 
 @Injectable()
 export class GradeManagementService {
@@ -42,10 +43,10 @@ export class GradeManagementService {
     }
 
     private async checkInClass(user: User, classId: Types.ObjectId): Promise<any> {
-        const classUser = await this.classUserRepository.findOne({ user_id: user._id, class_id: classId }).exec();
-        if (classUser == null) {
-            return new HttpException('You are not in this class', HttpStatus.FORBIDDEN);
-        }
+        // const classUser = await this.classUserRepository.findOne({ user_id: user._id, class_id: classId }).exec();
+        // if (classUser == null) {
+        //     return new HttpException('You are not in this class', HttpStatus.FORBIDDEN);
+        // }
     }
 
     private async getStudentOfClass(classId: Types.ObjectId): Promise<User[]> {
@@ -121,22 +122,53 @@ export class GradeManagementService {
 
     async showStudentsListxGradesBoard(currentUser: User, classid: string) {
         const classId = new Types.ObjectId(classid);
-        this.checkInClass(currentUser, classId);
+        await this.checkInClass(currentUser, classId);
         try {
-            const users = await this.getStudentOfClass(classId);
-            let rows = [];
-            users.forEach(async (user) => {
-                const userxgrade = await this.userGradeRepository.findOne({ user_id: user._id, class_id: classId }).exec();
-                const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
-                const studentId = classUser.students.find((student) => student.user_id == user._id).student_id;
-                rows.push(Object.values({ Name: user.fullname, Id: studentId, Grade: userxgrade.grades }));
-            })
+            const classUser = await this.classUserRepository.findOne({ class_id: classId });
+            const students = classUser.students;
+            const rows = [];
 
+            for (const student of students) {
+                const studentName = (await this.userRepository.findOne({ _id: student.user_id }).exec()).fullname;
+                const studentId = student.student_id;
+                const userGrade = await this.userGradeRepository.findOne({ user_id: student.user_id, class_id: classId }).exec();
+                const grades = userGrade.grades;
+                const row = {
+                    user_id: student.user_id,
+                    studentName: studentName,
+                    studentId: studentId,
+                };
+
+                grades.forEach((grade) => {
+                    row[grade.gradeCompo_name] = grade.current_grade;
+                });
+
+                rows.push(row);
+            }
             return rows;
+
+        } catch (err) {
+            throw new HttpException('Error: ' + err, HttpStatus.BAD_REQUEST);
         }
-        catch (err) {
-            throw new HttpException('Error', HttpStatus.BAD_REQUEST);
+    }
+
+    async mapStudentId(user: User, dto: MapStudentIdDto) {
+        const classId = new Types.ObjectId(dto.class_id);
+        this.checkInClass(user, classId);
+        const userId = new Types.ObjectId(dto.user_id);
+        const updatedClassUser = await this.classUserRepository.findOneAndUpdate(
+            { class_id: classId, 'students.user_id': userId },
+            { $set: { 'students.$.student_id': dto.new_studentId } },
+            { new: true }
+        ).exec();
+
+        if (!updatedClassUser) {
+            throw new HttpException('Student not found or student_id not updated', HttpStatus.NOT_FOUND);
         }
+
+        return {
+            message: 'Map student id successful'
+        };
     }
 
     async inputGradeForStudent(currentUser: User, dto: InputGradeDto) {
@@ -173,42 +205,52 @@ export class GradeManagementService {
         };
     }
 
-    async downloadTemplateByAssignment(currentUser: User, classid: string, gradeCompo_name: string) {
+    async downloadTemplateByAssignment(currentUser: User, classid: string, targetGradeCompoName: string) {
         const classId = new Types.ObjectId(classid);
         this.checkInClass(currentUser, classId);
-        const users = await this.getStudentOfClass(classId);
-        let rows = [];
-        users.forEach(async (user) => {
-            const classUser = await this.classUserRepository.findOne({ class_id: classId }).exec();
-            const studentId = classUser.students.find((student) => student.user_id == user._id).student_id;
-            const gradeCompo = await this.userGradeRepository.findOne({ class_id: classId, user_id: user._id }).exec();
-            const current_grade = gradeCompo.grades.find((grade) => grade.gradeCompo_name == gradeCompo_name).current_grade;
-            rows.push(Object.values({ Name: user.fullname, Id: studentId, Grade: current_grade }));
-        })
+        try {
+            const classUser = await this.classUserRepository.findOne({ class_id: classId });
+            const students = classUser.students;
+            const rows = [];
 
-        let book = new Workbook();
-        let sheet = book.addWorksheet('List Student with Assignment grade');
-        rows.unshift(Object.values({ studentName: 'Student Name', studentId: 'Student Id', gradeCompo_name: gradeCompo_name }));
-        sheet.addRows(rows);
-        this.styleSheet(sheet);
-
-        let File = await new Promise((resolve, rejects) => {
-            tmp.file(
-                {
-                    discardDescriptor: true,
-                    prefix: `StudentGrade${gradeCompo_name}`,
-                    postfix: '.xlsx',
-                    mode: parseInt('0600', 8),
-                },
-                async (err, file) => {
-                    if (err) throw new BadRequestException(err);
-                    await book.xlsx.writeFile(file);
-                    resolve(file);
-                }
-            );
-        });
-
-        return File;
+            for (const student of students) {
+                const studentInfo = await this.userRepository.findOne({ _id: student.user_id }).exec();
+                const studentName = studentInfo.fullname;
+                const studentId = student.student_id;
+                const userGrade = await this.userGradeRepository.findOne({ user_id: student.user_id, class_id: classId }).exec();
+                const targetGrade = userGrade.grades.find((grade) => grade.gradeCompo_name === targetGradeCompoName);
+                const row = {
+                    studentName: studentName,
+                    studentId: studentId
+                };
+                row[targetGradeCompoName] = targetGrade.current_grade;
+                rows.push(Object.values(row));
+            }
+            rows.unshift(Object.values({ studentName: 'Student Name', studentId: 'Student Id', [targetGradeCompoName]: targetGradeCompoName }));
+            let book = new Workbook();
+            let sheet = book.addWorksheet('List Grade Student of ' + targetGradeCompoName);
+            sheet.addRows(rows);
+            this.styleSheet(sheet);
+            let File = await new Promise((resolve, rejects) => {
+                tmp.file(
+                    {
+                        discardDescriptor: true,
+                        prefix: `MyExcelSheet`,
+                        postfix: '.xlsx',
+                        mode: parseInt('0600', 8),
+                    },
+                    async (err, file) => {
+                        if (err) throw new BadRequestException(err);
+                        await book.xlsx.writeFile(file);
+                        resolve(file);
+                    }
+                );
+            });
+            return File;
+        }
+        catch (err) {
+            throw new HttpException('Error: ' + err, HttpStatus.BAD_REQUEST);
+        }
     }
 
 
