@@ -36,6 +36,9 @@ export class GradeCompositionService {
     async createGradeComposition(user: User, dto: CreateGradeCompositionDto) {
         try {
             this.checkIsHost(user, dto.class_id);
+            if (!Types.ObjectId.isValid(dto.class_id)) {
+                return new HttpException("Invalid class_id format", HttpStatus.BAD_REQUEST);
+            }
             const classId = new Types.ObjectId(dto.class_id);
 
             const clazz = await this.classRepository.findOne(
@@ -102,10 +105,10 @@ export class GradeCompositionService {
             }
             clazz.grade_compositions.splice(index, 1);
 
-            const students = await this.userGradeRepository.find({ class_id: dto.class_id }).exec();
-            for (let i = 0; i < students.length; i++) {
-                students[i].grades.splice(index, 1);
-            };
+            await this.userGradeRepository.updateMany(
+                { class_id: new Types.ObjectId(dto.class_id) },
+                { $pull: { 'grades': { gradeCompo_name: dto.name } } },
+            ).exec();
 
             return await clazz.save();
         }
@@ -130,12 +133,15 @@ export class GradeCompositionService {
             clazz.grade_compositions[index].gradeCompo_name = dto.name;
             clazz.grade_compositions[index].gradeCompo_scale = dto.scale;
 
-            const students = await this.userGradeRepository.find({ class_id: classId }).exec();
-            for (let i = 0; i < students.length; i++) {
-                students[i].grades[index].gradeCompo_name = dto.name;
-                students[i].grades[index].gradeCompo_scale = dto.scale;
-                students[i].save();
-            };
+            await this.userGradeRepository.updateMany(
+                { class_id: classId, 'grades.gradeCompo_name': dto.oldName },
+                {
+                    $set: {
+                        'grades.$.gradeCompo_name': dto.name,
+                        'grades.$.gradeCompo_scale': dto.scale,
+                    }
+                },
+            ).exec();
 
             return await clazz.save();
 
@@ -163,13 +169,18 @@ export class GradeCompositionService {
             clazz.grade_compositions[index1] = clazz.grade_compositions[index2];
             clazz.grade_compositions[index2] = temp;
 
-            const students = await this.userGradeRepository.find({ class_id: classId }).exec();
-            for (let i = 0; i < students.length; i++) {
-                const temp = students[i].grades[index1];
-                students[i].grades[index1] = students[i].grades[index2];
-                students[i].grades[index2] = temp;
-                students[i].save();
-            };
+            await this.userGradeRepository.updateOne(
+                { class_id: classId, 'grades.gradeCompo_name': { $in: [dto.firstName, dto.secondName] } },
+                [
+                    {
+                        $set: {
+                            'grades.$[grade1]': '$grades.$[grade2]',
+                            'grades.$[grade2]': '$grades.$[grade1]',
+                        }
+                    },
+                ],
+                { arrayFilters: [{ 'grade1.gradeCompo_name': dto.firstName }, { 'grade2.gradeCompo_name': dto.secondName }] }
+            ).exec();
 
             return await clazz.save();
 

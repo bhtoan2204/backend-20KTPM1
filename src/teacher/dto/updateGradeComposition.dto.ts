@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsString } from "class-validator";
+import { IsValidObjectId } from "src/utils/customValidator/isValidObjectId.validator";
 
 export class UpdateGradeCompositionDto {
     @ApiProperty({
@@ -7,6 +8,7 @@ export class UpdateGradeCompositionDto {
     })
     @IsNotEmpty()
     @IsString()
+    @IsValidObjectId()
     class_id: string;
 
     @ApiProperty({

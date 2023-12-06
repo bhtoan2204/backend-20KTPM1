@@ -10,6 +10,7 @@ import { Role } from "src/utils/enum/role.enum";
 import { StorageService } from "src/storage/storage.service";
 import { InputGradeDto } from "src/teacher/dto/inputGrade.dto";
 import { dot } from "node:test/reporters";
+import { MapStudentIdDto } from "src/teacher/dto/mapStudentId.dto";
 
 @ApiTags('Grade Management for Teacher')
 @Controller('gradeManagement')
@@ -53,6 +54,13 @@ export class GradeManagementController {
     @Get('/showGradeOfStudent/:classId')
     async showStudentsListxGradesBoard(@CurrentUser() user, @Param() params: any) {
         return this.gradeManagementService.showStudentsListxGradesBoard(user, params.classId);
+    }
+
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Map StudentId of a student in class' })
+    @Patch('/mapStudentId')
+    async mapStudentId(@CurrentUser() user, @Body() dto: MapStudentIdDto) {
+        return this.gradeManagementService.mapStudentId(user, dto);
     }
 
     @HttpCode(HttpStatus.OK)

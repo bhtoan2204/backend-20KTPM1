@@ -43,9 +43,9 @@ export class GradeCompositionController {
     }
 
     @HttpCode(HttpStatus.OK)
-    @Patch('/updateGradeCompositions/:oldName')
+    @Patch('/updateGradeCompositions')
     @ApiOperation({ summary: 'Update grade composition' })
-    async updateGradeCompositions(@CurrentUser() user, @Body() dto: UpdateGradeCompositionDto, @Param() params: any) {
+    async updateGradeCompositions(@CurrentUser() user, @Body() dto: UpdateGradeCompositionDto) {
         return this.gradeService.updateGradeCompositions(user, dto);
     }
 
