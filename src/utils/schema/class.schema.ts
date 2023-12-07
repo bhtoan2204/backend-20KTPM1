@@ -28,6 +28,29 @@ export class Class extends AbstractDocument {
         type: [
             {
                 gradeCompo_name: { type: String, required: true },
+                url: { type: String, default: '' },
+                is_finalized: { type: Boolean, default: false },
+            },
+        ],
+        validate: {
+            validator: function (listAssignment) {
+                const names = listAssignment.map(item => item.gradeCompo_name);
+                return (new Set(names)).size === names.length;
+            },
+            message: "gradeCompo_name must be unique within the list_assignment_url array.",
+        },
+        default: [],
+    })
+    list_assignment_url: {
+        gradeCompo_name: string;
+        url: string;
+        is_finalized: boolean;
+    }[];
+
+    @Prop({
+        type: [
+            {
+                gradeCompo_name: { type: String, required: true },
                 gradeCompo_scale: { type: Number, required: true },
                 is_finalized: { type: Boolean, default: false },
             },
