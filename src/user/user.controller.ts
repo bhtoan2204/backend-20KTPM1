@@ -38,7 +38,7 @@ export class UserController {
   // @UseInterceptors(CacheInterceptor)
   async getProfile(@Req() request) {
     const { _id } = request.user as TokenPayload;
-    return (await this.usersService.getUserById(_id)).toJSON();
+    return await this.usersService.getUserById(_id);
   }
 
   @HttpCode(HttpStatus.CREATED)
