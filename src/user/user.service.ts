@@ -226,9 +226,15 @@ export class UserService {
   }
 
   async updatePassword(_id: any, dto: ChangePassworDto) {
-    if (dto.password !== dto.rewrite_password) {
-      throw new Error('Two password are not match');
+    const user = await this.userRepository.findOne({ _id }).exec();
+    if (!user) throw new NotFoundException("User not found");
+    const passwordIsValid = await bcrypt.compare(dto.old_password, user.password);
+    if (!passwordIsValid) throw new UnauthorizedException("Old password not match");
+
+    if (!(dto.password === dto.rewrite_password)) {
+      throw new UnauthorizedException('Two password are not match');
     }
+
     const hashPassword = await bcrypt.hash(dto.password, 10);
     await this.userRepository.findOneAndUpdate(
       { _id },
