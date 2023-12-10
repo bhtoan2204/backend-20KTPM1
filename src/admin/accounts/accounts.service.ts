@@ -39,10 +39,14 @@ export class AccountsService {
             user.is_ban = !user.is_ban;
             await user.save();
 
-            return (!user.is_ban) ? "Ban successfully" : "Unban successfully";
+            return { message: (user.is_ban) ? "Ban successfully" : "Unban successfully" };
         }
         catch (err) {
             throw err;
         }
+    }
+
+    async userDetail(userId: string) {
+        return this.userRepository.findById(new Types.ObjectId(userId)).select('-password').exec();
     }
 }

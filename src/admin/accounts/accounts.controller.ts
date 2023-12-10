@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/utils/guard/authenticate/jwt-auth.guard";
 import { RolesGuard } from "src/utils/guard/authorize/role.guard";
@@ -7,6 +7,7 @@ import { Role } from "src/utils/enum/role.enum";
 import { AccountsService } from "./accounts.service";
 import { SearchFilterDto } from "./dto/searchFilter.dto";
 import { SearchService } from "src/elastic/search.service";
+import { CacheInterceptor } from "@nestjs/cache-manager";
 
 @ApiTags('Accounts for Admin')
 @Controller('accounts')
@@ -19,6 +20,7 @@ export class AccountsController {
         private readonly searchService: SearchService
     ) { }
 
+    @UseInterceptors(CacheInterceptor)
     @Post('/getUsers')
     @ApiOperation({ summary: 'Get users' })
     async getUsers(@Body() filter: SearchFilterDto) {
@@ -44,6 +46,14 @@ export class AccountsController {
     @ApiParam({ name: 'text', type: String })
     async searchAccounts(@Param() params: any) {
         return this.searchService.search(params.text);
+    }
+
+    @UseInterceptors(CacheInterceptor)
+    @Get('/userDetail/:userId')
+    @ApiOperation({ summary: 'Get user detail' })
+    @ApiParam({ name: 'userId', type: String })
+    async userDetail(@Param() params: any) {
+        return this.accountsService.userDetail(params.userId);
     }
 
     async elasticSearchAccounts() { }

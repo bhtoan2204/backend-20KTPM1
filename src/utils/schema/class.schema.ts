@@ -69,6 +69,9 @@ export class Class extends AbstractDocument {
         gradeCompo_scale: number;
         is_finalized: boolean;
     }[];
+
+    @Prop({ default: true })
+    is_active: boolean;
 }
 
 export const ClassSchema = SchemaFactory.createForClass(Class);

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, Max, Min } from 'class-validator';
 import { Role } from 'src/utils/enum/role.enum';
 
 export class SearchFilterDto {
@@ -29,6 +29,6 @@ export class SearchFilterDto {
     @IsOptional()
     @IsInt({ message: 'PerPage should be an integer' })
     @Min(5, { message: 'PerPage should be greater than or equal to 5' })
-    @Min(20, { message: 'PerPage should be less than or equal to 20' })
+    @Max(20, { message: 'PerPage should be less than or equal to 20' })
     perPage?: number;
 }
