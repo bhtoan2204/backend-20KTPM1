@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
+import { HttpException, HttpStatus, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { Request } from "express";
@@ -6,6 +6,7 @@ import { Invitation, InvitationDocument } from "src/utils/schema/invitation.sche
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { User, UserDocument } from "src/utils/schema/user.schema";
+import { SearchService } from "src/elastic/search.service";
 
 @Injectable()
 export class InvitationService {
@@ -14,6 +15,7 @@ export class InvitationService {
         @InjectModel(Class.name) private readonly classRepository: Model<ClassDocument>,
         @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>,
         @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
+        @Inject(SearchService) private readonly searchService: SearchService,
     ) { }
 
     async checkIsHost(user: User, classId: Types.ObjectId): Promise<any> {
@@ -71,10 +73,24 @@ export class InvitationService {
         const classUser = await this.classUserRepository.findOne(
             { class_id: classId }
         )
+        const clazz = await this.classRepository.findOne({ _id: classId }).exec();
         if (classUser.teachers.findIndex(teacher => teacher.user_id == user._id) == -1) {
             classUser.teachers.push({ user_id: user._id });
             await classUser.save();
-            this.userRepository.findOneAndUpdate({ _id: user._id }, { $push: { classes: { class_id: classId } } }).exec();
+            const updatedUser = await this.userRepository.findOneAndUpdate(
+                { _id: user._id },
+                {
+                    $push: {
+                        classes: {
+                            class_id: classId,
+                            class_name: clazz.className,
+                            class_description: clazz.description,
+                        }
+                    }
+                }
+            ).exec();
+            await this.searchService.update(updatedUser);
+
             return {
                 message: 'Join class successfully'
             };

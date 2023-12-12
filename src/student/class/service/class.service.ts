@@ -1,6 +1,7 @@
 import { ForbiddenException, HttpException, HttpStatus, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
+import { SearchService } from "src/elastic/search.service";
 import { MapStudentIdDto } from "src/student/dto/mapStudentId.dto";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
@@ -16,6 +17,7 @@ export class ClassService {
         @InjectModel(Invitation.name) private readonly invitationRepository: Model<InvitationDocument>,
         @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
         @InjectModel(UserGrade.name) private readonly userGradeRepository: Model<UserGradeDocument>,
+        @Inject(SearchService) private readonly searchService: SearchService,
     ) { }
 
     async checkInClassForView(user: User, classId: Types.ObjectId): Promise<any> {
@@ -51,13 +53,19 @@ export class ClassService {
         });
         classUser.save();
         const clazz = await this.classRepository.findOne({ _id: classId }).exec();
-        const updatedUser = await this.userRepository.findOne({ _id: user._id })
-        updatedUser.classes.push({
-            class_id: classId,
-            class_name: clazz.className,
-            class_description: clazz.description,
-        })
-        updatedUser.save();
+        const updatedUser = await this.userRepository.findOneAndUpdate(
+            { _id: user._id },
+            {
+                $push: {
+                    classes: {
+                        class_id: classId,
+                        class_name: clazz.className,
+                        class_description: clazz.description,
+                    }
+                }
+            }
+        ).exec();
+        await this.searchService.update(updatedUser);
 
         const grades = clazz.grade_compositions.map(comp => ({
             gradeCompo_name: comp.gradeCompo_name,
@@ -92,14 +100,19 @@ export class ClassService {
 
         const clazz = await this.classRepository.findOne({ _id: classId }).exec();
 
-        const updatedUser = await this.userRepository.findOne({ _id: user._id })
-
-        updatedUser.classes.push({
-            class_id: classId,
-            class_name: clazz.className,
-            class_description: clazz.description,
-        })
-        updatedUser.save();
+        const updatedUser = await this.userRepository.findOneAndUpdate(
+            { _id: user._id },
+            {
+                $push: {
+                    classes: {
+                        class_id: classId,
+                        class_name: clazz.className,
+                        class_description: clazz.description,
+                    }
+                }
+            }
+        ).exec();
+        await this.searchService.update(updatedUser);
 
         const grades = clazz.grade_compositions.map(comp => ({
             gradeCompo_name: comp.gradeCompo_name,
@@ -112,7 +125,6 @@ export class ClassService {
             class_id: classId,
             grades: grades,
         }
-        console.log
 
         await this.userGradeRepository.create(newUserGrade);
 

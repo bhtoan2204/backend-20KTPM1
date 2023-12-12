@@ -97,7 +97,12 @@ export class GradeManagementController {
         return this.gradeManagementService.uploadGradeByAssignment(user, file, dto);
     }
 
-    async showTotalGradeColumn(@CurrentUser() user, @Param() params: any) { }
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Show overall grade of grade board' })
+    @Get('/showTotalGradeColumn/:classId')
+    async showTotalGradeColumn(@CurrentUser() user, @Param() params: any) {
+
+    }
 
     @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)

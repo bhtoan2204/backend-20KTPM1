@@ -4,6 +4,11 @@ import { User } from "src/utils/schema/user.schema";
 import { UserResult } from './interface/user-search-results.interace';
 import { UserBody } from './interface/user-search-body.interface';
 
+interface Class {
+    class_id: string;
+    class_name: string;
+    class_description: string;
+}
 
 @Injectable()
 export class SearchService {
@@ -13,16 +18,27 @@ export class SearchService {
     ) { }
 
     async indexUser(currentUser: User) {
+        const currentUserClasses = currentUser.classes.map((classItem) => {
+            const { class_id, class_name, class_description } = classItem;
+            return {
+                class_id: class_id.toString(),
+                class_name,
+                class_description,
+            }
+        })
         return this.elasticsearchService.index<UserResult, UserBody>({
             index: this.index,
             body: {
-                id: currentUser._id,
-                email: currentUser.email,
+                _id: currentUser._id,
                 fullname: currentUser.fullname,
+                email: currentUser.email,
                 role: currentUser.role,
                 login_type: currentUser.login_type,
+                avatar: currentUser.avatar,
+                is_ban: currentUser.is_ban,
+                classes: currentUserClasses,
             }
-        })
+        });
     }
 
     private validateInput(query: string): void {
@@ -79,12 +95,23 @@ export class SearchService {
     }
 
     async update(currentUser: User) {
+        const currentUserClasses = currentUser.classes.map((classItem) => {
+            const { class_id, class_name, class_description } = classItem;
+            return {
+                class_id: class_id.toString(),
+                class_name,
+                class_description,
+            }
+        })
         const newBody: UserBody = {
-            id: currentUser._id,
-            email: currentUser.email,
+            _id: currentUser._id,
             fullname: currentUser.fullname,
+            email: currentUser.email,
             role: currentUser.role,
             login_type: currentUser.login_type,
+            avatar: currentUser.avatar,
+            is_ban: currentUser.is_ban,
+            classes: currentUserClasses,
         }
 
         const script = Object.entries(newBody).reduce((result, [key, value]) => {
@@ -96,7 +123,7 @@ export class SearchService {
             body: {
                 query: {
                     match: {
-                        id: currentUser._id
+                        _id: currentUser._id
                     }
                 },
                 script: {
