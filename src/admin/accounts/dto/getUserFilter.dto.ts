@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, Max, Min } from 'class-validator';
 import { Role } from 'src/utils/enum/role.enum';
 
-export class SearchFilterDto {
+export class GetUserFilterDto {
     @ApiProperty({
         required: false,
         enum: [Role.TEACHER, Role.STUDENT, 'all'],

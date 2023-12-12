@@ -68,7 +68,7 @@ export class UserService {
       throw new MongooseError(err);
     }
     if (checkEmailUser) {
-      throw new MongooseError('Email already exists');
+      return new MongooseError('Email already exists');
     }
   }
 

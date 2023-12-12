@@ -5,9 +5,10 @@ import { RolesGuard } from "src/utils/guard/authorize/role.guard";
 import { Roles } from "src/utils/decorator/role.decorator";
 import { Role } from "src/utils/enum/role.enum";
 import { AccountsService } from "./accounts.service";
-import { SearchFilterDto } from "./dto/searchFilter.dto";
+import { GetUserFilterDto } from "./dto/getUserFilter.dto";
 import { SearchService } from "src/elastic/search.service";
 import { CacheInterceptor } from "@nestjs/cache-manager";
+import { SearchUserDto } from "./dto/searchUser.dto";
 
 @ApiTags('Accounts for Admin')
 @Controller('accounts')
@@ -23,16 +24,9 @@ export class AccountsController {
     @UseInterceptors(CacheInterceptor)
     @Post('/getUsers')
     @ApiOperation({ summary: 'Get users' })
-    async getUsers(@Body() filter: SearchFilterDto) {
+    async getUsers(@Body() filter: GetUserFilterDto) {
         return this.accountsService.getUsers(filter);
     }
-
-    async getTeachersPerPage() { }
-
-    async getStudentPerPage() { }
-
-    async getAccountDetail() { }
-
 
     @Patch('/banOrUnbanAccount/:userId')
     @ApiOperation({ summary: 'Ban account' })
@@ -41,11 +35,11 @@ export class AccountsController {
         return this.accountsService.banAccount(params.userId);
     }
 
-    @Get('/elasticSearchAccounts/:text')
+    @Post('/elasticSearchAccounts')
     @ApiOperation({ summary: 'Search accounts' })
     @ApiParam({ name: 'text', type: String })
-    async searchAccounts(@Param() params: any) {
-        return this.searchService.search(params.text);
+    async searchAccounts(@Body() dto: SearchUserDto) {
+        return this.searchService.search(dto.text, dto.page, dto.perPage);
     }
 
     @UseInterceptors(CacheInterceptor)
@@ -56,5 +50,15 @@ export class AccountsController {
         return this.accountsService.userDetail(params.userId);
     }
 
-    async elasticSearchAccounts() { }
+    @Get('/getClasses')
+    @ApiOperation({ summary: 'Get classes' })
+    async getClasses() {
+        return this.accountsService.getClasses();
+    }
+
+    @Get('/getStatistics')
+    @ApiOperation({ summary: 'Get statistics' })
+    async getStatistics() {
+        return this.accountsService.getStatistics();
+    }
 }

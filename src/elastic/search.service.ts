@@ -4,12 +4,6 @@ import { User } from "src/utils/schema/user.schema";
 import { UserResult } from './interface/user-search-results.interace';
 import { UserBody } from './interface/user-search-body.interface';
 
-interface Class {
-    class_id: string;
-    class_name: string;
-    class_description: string;
-}
-
 @Injectable()
 export class SearchService {
     index = 'users'
@@ -29,7 +23,7 @@ export class SearchService {
         return this.elasticsearchService.index<UserResult, UserBody>({
             index: this.index,
             body: {
-                _id: currentUser._id,
+                id: currentUser._id.toString(),
                 fullname: currentUser.fullname,
                 email: currentUser.email,
                 role: currentUser.role,
@@ -70,14 +64,17 @@ export class SearchService {
         };
     }
 
-    async search(text: string) {
+    async search(text: string, page: number, limit: number) {
         this.validateInput(text);
 
         const nameQuery = this.buildNameQuery(text);
         const emailQuery = this.buildEmailQuery(text);
+        const from = (page - 1) * limit;
 
         const { body } = await this.elasticsearchService.search<UserResult>({
             index: this.index,
+            from: from,
+            size: limit,
             body: {
                 query: {
                     bool: {
@@ -104,7 +101,7 @@ export class SearchService {
             }
         })
         const newBody: UserBody = {
-            _id: currentUser._id,
+            id: currentUser._id.toString(),
             fullname: currentUser.fullname,
             email: currentUser.email,
             role: currentUser.role,
