@@ -1,6 +1,8 @@
 import { ForbiddenException, HttpException, HttpStatus, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
+import { SearchService } from "src/elastic/search.service";
+import { MapStudentIdDto } from "src/student/dto/mapStudentId.dto";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { Invitation, InvitationDocument } from "src/utils/schema/invitation.schema";
@@ -15,6 +17,7 @@ export class ClassService {
         @InjectModel(Invitation.name) private readonly invitationRepository: Model<InvitationDocument>,
         @InjectModel(User.name) private readonly userRepository: Model<UserDocument>,
         @InjectModel(UserGrade.name) private readonly userGradeRepository: Model<UserGradeDocument>,
+        @Inject(SearchService) private readonly searchService: SearchService,
     ) { }
 
     async checkInClassForView(user: User, classId: Types.ObjectId): Promise<any> {
@@ -50,13 +53,19 @@ export class ClassService {
         });
         classUser.save();
         const clazz = await this.classRepository.findOne({ _id: classId }).exec();
-        const updatedUser = await this.userRepository.findOne({ _id: user._id })
-        updatedUser.classes.push({
-            class_id: classId,
-            class_name: clazz.className,
-            class_description: clazz.description,
-        })
-        updatedUser.save();
+        const updatedUser = await this.userRepository.findOneAndUpdate(
+            { _id: user._id },
+            {
+                $push: {
+                    classes: {
+                        class_id: classId,
+                        class_name: clazz.className,
+                        class_description: clazz.description,
+                    }
+                }
+            }
+        ).exec();
+        await this.searchService.update(updatedUser);
 
         const grades = clazz.grade_compositions.map(comp => ({
             gradeCompo_name: comp.gradeCompo_name,
@@ -91,14 +100,19 @@ export class ClassService {
 
         const clazz = await this.classRepository.findOne({ _id: classId }).exec();
 
-        const updatedUser = await this.userRepository.findOne({ _id: user._id })
-
-        updatedUser.classes.push({
-            class_id: classId,
-            class_name: clazz.className,
-            class_description: clazz.description,
-        })
-        updatedUser.save();
+        const updatedUser = await this.userRepository.findOneAndUpdate(
+            { _id: user._id },
+            {
+                $push: {
+                    classes: {
+                        class_id: classId,
+                        class_name: clazz.className,
+                        class_description: clazz.description,
+                    }
+                }
+            }
+        ).exec();
+        await this.searchService.update(updatedUser);
 
         const grades = clazz.grade_compositions.map(comp => ({
             gradeCompo_name: comp.gradeCompo_name,
@@ -111,7 +125,6 @@ export class ClassService {
             class_id: classId,
             grades: grades,
         }
-        console.log
 
         await this.userGradeRepository.create(newUserGrade);
 
@@ -164,5 +177,41 @@ export class ClassService {
         const teachers = await this.userRepository.find({ _id: { $in: teacherIds } }).select("fullname email").exec();
 
         return teachers;
+    }
+
+    async mapStudentId(user: User, dto: MapStudentIdDto) {
+        const classId = new Types.ObjectId(dto.class_id);
+        const clazz = await this.classRepository.findOne({ _id: classId }).exec();
+        if (!clazz) return new NotFoundException("Class not found");
+        const classUser = await this.classUserRepository.findOne({
+            class_id: new Types.ObjectId(classId)
+        })
+        const student = classUser.students.map(student => student.user_id === user._id);
+        if (!student) return new NotFoundException("You are not in this class");
+
+        const updatedClassUser = await this.classUserRepository.findOneAndUpdate(
+            { class_id: classId, 'students.user_id': user._id },
+            { $set: { 'students.$.student_id': dto.new_studentId } },
+            { new: true }
+        ).exec();
+
+        if (!updatedClassUser) {
+            throw new HttpException('Student not found or student_id not updated', HttpStatus.NOT_FOUND);
+        }
+
+        return {
+            message: 'Map student id successful'
+        };
+    }
+
+    async leaveClass(user: User, classid: string) {
+        const classId = new Types.ObjectId(classid);
+        const clazzz = await this.classRepository.findOne({ _id: classId }).exec();
+        if (!clazzz) return new NotFoundException("Class not found");
+        const classUser = await this.classUserRepository.findOne({
+            class_id: new Types.ObjectId(classId)
+        })
+        const student = classUser.students.map(student => student.user_id === user._id);
+        if (!student) return new NotFoundException("You are not in this class");
     }
 }

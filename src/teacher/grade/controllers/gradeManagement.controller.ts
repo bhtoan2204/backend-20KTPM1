@@ -11,6 +11,7 @@ import { StorageService } from "src/storage/storage.service";
 import { InputGradeDto } from "src/teacher/dto/inputGrade.dto";
 import { dot } from "node:test/reporters";
 import { MapStudentIdDto } from "src/teacher/dto/mapStudentId.dto";
+import { UploadGradeAssignmentDto } from "src/teacher/dto/uploadGradeAssignment.dto";
 
 @ApiTags('Grade Management for Teacher')
 @Controller('gradeManagement')
@@ -81,9 +82,27 @@ export class GradeManagementController {
         res.download(`${result}`);
     }
 
-    async uploadGradeByAssignment(@CurrentUser() user, @Param() params: any) { }
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Upload grade of students by assignment' })
+    @Post('/uploadGradeByAssignment')
+    @UseInterceptors(FileInterceptor('grade', {
+        fileFilter: (req, file, callback) => {
+            if (file.originalname.match(/\.(csv|xlsx)$/)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Only CSV or XLSX files are allowed!'), false);
+        },
+    }))
+    async uploadGradeByAssignment(@CurrentUser() user, @UploadedFile() file: Express.Multer.File, @Body() dto: UploadGradeAssignmentDto) {
+        return this.gradeManagementService.uploadGradeByAssignment(user, file, dto);
+    }
 
-    async showTotalGradeColumn(@CurrentUser() user, @Param() params: any) { }
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Show overall grade of grade board' })
+    @Get('/showTotalGradeColumn/:classId')
+    async showTotalGradeColumn(@CurrentUser() user, @Param() params: any) {
+
+    }
 
     @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)

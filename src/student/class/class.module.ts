@@ -7,6 +7,8 @@ import { InvitationSchema } from "src/utils/schema/invitation.schema";
 import { ClassUserSchema } from "src/utils/schema/classUser.schema";
 import { UserSchema } from "src/utils/schema/user.schema";
 import { UserGradeSchema } from "src/utils/schema/userGrade.schema";
+import { SearchService } from "src/elastic/search.service";
+import { SearchModule } from "src/elastic/search.module";
 
 @Module({
     imports: [
@@ -15,8 +17,9 @@ import { UserGradeSchema } from "src/utils/schema/userGrade.schema";
         MongooseModule.forFeature([{ name: 'ClassUser', schema: ClassUserSchema }]),
         MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
         MongooseModule.forFeature([{ name: 'UserGrade', schema: UserGradeSchema }]),
+        SearchModule,
     ],
     controllers: [ClassController],
-    providers: [ClassService],
+    providers: [ClassService, SearchService],
 })
 export class ClassStudentsModule { }

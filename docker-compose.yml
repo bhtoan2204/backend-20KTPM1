@@ -64,18 +64,21 @@ services:
       
   redis:
     image: redis
-    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASS"
+    command: /bin/sh -c "redis-server --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81"
     env_file:
       - .env.development
     ports:
       - 6379:6379
     volumes:
       - ./redis/data:/data
+    networks:
+      - elastic
 
 volumes:
   esData01:
   database:
-  cache:
+  redis:
 
 networks: 
   elastic:
+    driver: bridge

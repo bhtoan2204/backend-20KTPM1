@@ -1,9 +1,14 @@
-import { Types } from "mongoose";
-
 export interface UserBody {
-    id: Types.ObjectId;
-    email: string;
-    fullname: string;
-    role: string;
-    login_type: string;
+    id: string,
+    fullname: string,
+    email: string,
+    role: string,
+    login_type: string,
+    avatar: string,
+    is_ban: boolean,
+    classes: {
+        class_id: string;
+        class_name: string;
+        class_description: string;
+    }[]
 }

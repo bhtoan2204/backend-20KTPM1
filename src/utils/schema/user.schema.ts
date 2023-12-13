@@ -38,7 +38,7 @@ export class User extends AbstractDocument {
     @Prop({ type: String, enum: Role })
     role: string
 
-    @Prop({ default: null })
+    @Prop({ default: 'https://storageclassroom.blob.core.windows.net/upload-file/c3f2c592f9 (1).jpg' })
     avatar: string;
 
     @Prop()

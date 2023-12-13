@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from "@nestjs/common";
 import { ClassService } from "../service/class.service";
 import { JwtAuthGuard } from "src/utils/guard/authenticate/jwt-auth.guard";
 import { RolesGuard } from "src/utils/guard/authorize/role.guard";
@@ -6,6 +6,7 @@ import { Roles } from "src/utils/decorator/role.decorator";
 import { Role } from "src/utils/enum/role.enum";
 import { CurrentUser } from "src/utils/decorator/current-user.decorator";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
+import { MapStudentIdDto } from "src/student/dto/mapStudentId.dto";
 
 @ApiTags('Class for student')
 @Controller('class')
@@ -63,6 +64,21 @@ export class ClassController {
     @ApiOperation({ summary: 'View class members' })
     async viewClassTeachers(@CurrentUser() user, @Param() params: any) {
         return this.classService.viewClassTeachers(user, params.classId);
+    }
+
+    @HttpCode(HttpStatus.OK)
+    @Post('/mapStudentId')
+    @ApiOperation({ summary: 'Map student id' })
+    async mapStudentId(@CurrentUser() user, @Body() dto: MapStudentIdDto) {
+        return this.classService.mapStudentId(user, dto);
+    }
+
+    @HttpCode(HttpStatus.OK)
+    @Delete('leaveClass/:classId')
+    @ApiParam({ name: 'classId', type: String })
+    @ApiOperation({ summary: 'Leave class' })
+    async leaveClass(@CurrentUser() user, @Param() params: any) {
+        return this.classService.leaveClass(user, params.classId);
     }
 
 }

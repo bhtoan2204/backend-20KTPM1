@@ -7,10 +7,12 @@ import { SearchService } from "src/elastic/search.service";
 import { ElasticsearchModule } from "@nestjs/elasticsearch";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { SearchModule } from "src/elastic/search.module";
+import { ClassSchema } from "src/utils/schema/class.schema";
 
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+        MongooseModule.forFeature([{ name: 'Class', schema: ClassSchema }]),
         SearchModule,
     ],
     controllers: [AccountsController],

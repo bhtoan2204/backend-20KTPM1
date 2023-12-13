@@ -10,6 +10,7 @@ import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { UserGrade, UserGradeDocument } from "src/utils/schema/userGrade.schema";
 import { InputGradeDto } from "src/teacher/dto/inputGrade.dto";
 import { MapStudentIdDto } from "src/teacher/dto/mapStudentId.dto";
+import { UploadGradeAssignmentDto } from "src/teacher/dto/uploadGradeAssignment.dto";
 
 @Injectable()
 export class GradeManagementService {
@@ -251,6 +252,44 @@ export class GradeManagementService {
         catch (err) {
             throw new HttpException('Error: ' + err, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    async uploadGradeByAssignment(currentUser: User, file: Express.Multer.File, dto: UploadGradeAssignmentDto) {
+        const classId = new Types.ObjectId(dto.class_id);
+        this.checkInClass(currentUser, classId);
+        const fileName = await this.storageService.uploadCsv(file, dto.class_id);
+
+        const updatedClass = await this.classRepository.findOneAndUpdate(
+            { _id: classId, 'list_assignment_url.gradeCompo_name': dto.gradeCompo_name },
+            {
+                $set: {
+                    'list_assignment_url.$.url': fileName,
+                },
+            },
+            { new: true }
+        ).exec();
+
+        // If the gradeCompoName doesn't exist, add a new entry
+        if (!updatedClass) {
+            await this.classRepository.findByIdAndUpdate(
+                classId,
+                {
+                    $push: {
+                        list_assignment_url: {
+                            gradeCompo_name: dto.gradeCompo_name,
+                            url: fileName,
+                            is_finalized: false,
+                        },
+                    },
+                },
+                { new: true }
+            ).exec();
+        }
+
+        return {
+            message: 'Upload file successful',
+            fileName: fileName,
+        };
     }
 
 
