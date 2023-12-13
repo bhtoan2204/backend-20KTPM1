@@ -15,6 +15,12 @@ export class ClassAdminService {
     ) { }
 
     async getClasses(dto: GetClassesFilterDto) {
+        let countQueryBuilder = this.classRepository.find();
+        if (dto.is_active !== undefined && dto.is_active !== null) {
+            countQueryBuilder = countQueryBuilder.where('is_active').equals(dto.is_active);
+        }
+        const totalCount = await countQueryBuilder.countDocuments().exec();
+
         let queryBuilder = this.classRepository.find()
             .populate({
                 path: 'host',
@@ -36,7 +42,7 @@ export class ClassAdminService {
         }
 
         const classesWithHostName = await queryBuilder.exec();
-        return classesWithHostName;
+        return { classesWithHostName, totalCount };
     }
 
     async getTeachers(classid: string): Promise<any> {
