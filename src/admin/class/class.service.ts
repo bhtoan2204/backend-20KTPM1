@@ -4,6 +4,7 @@ import { Model, Types } from "mongoose";
 import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { User, UserDocument } from "src/utils/schema/user.schema";
+import { GetClassesFilterDto } from "./dto/getClassFilter.dto";
 
 @Injectable()
 export class ClassAdminService {
@@ -13,16 +14,28 @@ export class ClassAdminService {
         @InjectModel(ClassUser.name) private readonly classUserRepository: Model<ClassUserDocument>
     ) { }
 
-    async getClasses() {
-        const classesWithHostName = await this.classRepository
-            .find()
+    async getClasses(dto: GetClassesFilterDto) {
+        let queryBuilder = this.classRepository.find()
             .populate({
                 path: 'host',
                 model: 'User',
                 select: 'fullname',
-            })
-            .exec();
+            });
 
+        if (dto.is_active !== undefined && dto.is_active !== null) {
+            queryBuilder = queryBuilder.where('is_active').equals(dto.is_active);
+        }
+
+        if (dto.is_descending) {
+            queryBuilder = queryBuilder.sort({ createdAt: -1 });
+        }
+
+        if (dto.page !== undefined && dto.itemPerPage !== undefined) {
+            const startIndex = (dto.page - 1) * dto.itemPerPage;
+            queryBuilder = queryBuilder.skip(startIndex).limit(dto.itemPerPage);
+        }
+
+        const classesWithHostName = await queryBuilder.exec();
         return classesWithHostName;
     }
 
