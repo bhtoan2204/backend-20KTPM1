@@ -1,8 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document, Types } from "mongoose";
-import { type } from "os";
 import { AbstractDocument } from "src/utils/database/abstract.schema";
-import { Status } from "../enum/status.enum";
 
 export type GradeReviewDocument = GradeReview & Document;
 

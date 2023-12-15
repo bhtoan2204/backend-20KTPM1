@@ -26,7 +26,8 @@ export class ClassAdminService {
                 path: 'host',
                 model: 'User',
                 select: 'fullname',
-            });
+            })
+            .lean();
 
         if (dto.is_active !== undefined && dto.is_active !== null) {
             queryBuilder = queryBuilder.where('is_active').equals(dto.is_active);
@@ -45,43 +46,69 @@ export class ClassAdminService {
         return { classesWithHostName, totalCount };
     }
 
-    async getTeachers(classid: string): Promise<any> {
+    async getTeachers(classid: string, page: number, itemPerPage): Promise<any> {
         const classId = new Types.ObjectId(classid);
         try {
             const classUsers = await this.classUserRepository.find({ class_id: new Types.ObjectId(classId) });
-            const userIds = classUsers.map(classUser => classUser.teachers.map(teachers => teachers.user_id));
-            const teachers = await this.userRepository.find({ _id: { $in: userIds } });
+            const userIds = classUsers.flatMap(classUser => classUser.teachers.map(teachers => teachers.user_id));
+            const skipCount = (page - 1) * itemPerPage;
+            const teachers = await this.userRepository.find(
+                { _id: { $in: userIds } },
+                {
+                    password: 0,
+                    role: 0,
+                    birthday: 0,
+                    refreshToken: 0,
+                    classes: 0,
+                }
+            ).limit(itemPerPage).skip(skipCount);
+
             return teachers;
-        }
-        catch (error) {
+        } catch (error) {
             return { message: `Error: ${error.message}` };
         }
     }
 
-    async getStudents(classid: string): Promise<any> {
+    async getStudents(classid: string, page: number, itemPerPage): Promise<any> {
         const classId = new Types.ObjectId(classid);
         try {
-            const classUsers = await this.classUserRepository.find({ class_id: classId });
-            const userIds = classUsers.map(classUser => classUser.students.map(student => student.user_id));
-            const students = await this.userRepository.find({ _id: { $in: userIds } });
-            return students;
-        }
-        catch (error) {
+            const classUsers = await this.classUserRepository.find({ class_id: new Types.ObjectId(classId) });
+            const userIds = classUsers.flatMap(classUser => classUser.students.map(student => student.user_id));
+            const skipCount = (page - 1) * itemPerPage;
+            const teachers = await this.userRepository.find(
+                { _id: { $in: userIds } },
+                {
+                    password: 0,
+                    role: 0,
+                    birthday: 0,
+                    refreshToken: 0,
+                    classes: 0,
+                }
+            ).limit(itemPerPage).skip(skipCount);
+
+            return teachers;
+        } catch (error) {
             return { message: `Error: ${error.message}` };
         }
     }
 
     async getClassDetail(classId: string) {
         const classDetail = await this.classRepository
-            .find({ _id: new Types.ObjectId(classId) })
+            .findOne({ _id: new Types.ObjectId(classId) })
+            .lean()
             .populate({
                 path: 'host',
                 model: 'User',
-                select: 'fullname',
+                select: 'fullname avatar',
             })
             .exec();
-        const students = await this.getStudents(classId);
-        const teachers = await this.getTeachers(classId);
-        return { classDetail, students, teachers };
+        return classDetail;
+    }
+
+    async activateClass(classId: string) {
+        const classDetail = await this.classRepository.findOne({ _id: new Types.ObjectId(classId) });
+        classDetail.is_active = !classDetail.is_active;
+        await classDetail.save();
+        return { message: classDetail.is_active ? 'Activate class successfully' : 'Deactivate class successfully' };
     }
 }
