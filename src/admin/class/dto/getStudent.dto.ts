@@ -11,11 +11,17 @@ export class GetStudentDto {
     @IsValidObjectId()
     class_id: string;
 
+    @ApiProperty({
+        description: 'Page number'
+    })
     @IsOptional()
     @IsInt()
     @Min(1, { message: 'Page should be greater than 0' })
     page?: number;
 
+    @ApiProperty({
+        description: 'Item per page'
+    })
     @IsOptional()
     @IsInt()
     @Min(5, { message: 'PerPage should be greater than or equal to 5' })

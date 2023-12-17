@@ -8,6 +8,7 @@ import { ClassAdminService } from "./class.service";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import { GetClassesFilterDto } from "./dto/getClassFilter.dto";
 import { GetStudentDto } from "./dto/getStudent.dto";
+import { MapStudentDto } from "./dto/mapStudent.dto";
 
 @Controller('class')
 @ApiTags('Class for Admin')
@@ -37,7 +38,7 @@ export class ClassAdminController {
     @Post('/getStudents')
     @ApiOperation({ summary: 'Get students' })
     async getStudents(@Body() dto: GetStudentDto) {
-        return this.classAdminService.getTeachers(dto.class_id, dto.page, dto.itemPerPage);
+        return this.classAdminService.getStudents(dto.class_id, dto.page, dto.itemPerPage);
     }
 
     @UseInterceptors(CacheInterceptor)
@@ -53,5 +54,11 @@ export class ClassAdminController {
     @ApiOperation({ summary: 'Activate class' })
     async activateClass(@Param() params: any) {
         return this.classAdminService.activateClass(params.classId);
+    }
+
+    @Patch('/manualMapStudentId')
+    @ApiOperation({ summary: 'Manual map student id' })
+    async manualMapStudentId(@Body() dto: MapStudentDto) {
+        return this.classAdminService.manualMapStudentId(dto.class_id, dto.user_id, dto.student_id);
     }
 }
