@@ -5,6 +5,11 @@ import { Class, ClassDocument } from "src/utils/schema/class.schema";
 import { ClassUser, ClassUserDocument } from "src/utils/schema/classUser.schema";
 import { User, UserDocument } from "src/utils/schema/user.schema";
 import { GetClassesFilterDto } from "./dto/getClassFilter.dto";
+import { parse } from 'csv-parse';
+
+type StudentId = {
+    student_id: string;
+}
 
 @Injectable()
 export class ClassAdminService {
@@ -114,7 +119,6 @@ export class ClassAdminService {
     async getClassDetail(classId: string) {
         const classDetail = await this.classRepository
             .findOne({ _id: new Types.ObjectId(classId) })
-            .lean()
             .populate({
                 path: 'host',
                 model: 'User',
@@ -149,5 +153,44 @@ export class ClassAdminService {
         } catch (error) {
             throw new Error('ClassUser document not found: ' + error.message);
         }
+    }
+
+    async mapStudentByExcel(classid: string, fileContent: Express.Multer.File) {
+        const classId = new Types.ObjectId(classid);
+        const classUsers = await this.classUserRepository.findOne({ class_id: classId });
+        if (!classUsers) {
+            throw new NotFoundException('Class not found');
+        }
+
+        const headers = ['student_id'];
+        let data: StudentId[] = [];
+        if (fileContent.originalname.endsWith('.csv')) {
+            data = await new Promise<StudentId[]>((resolve, reject) => {
+                parse(fileContent.buffer.toString(), {
+                    delimiter: ',',
+                    columns: headers,
+                }, (error, result: StudentId[]) => {
+                    if (error) {
+                        console.error(error);
+                        reject(error);
+                    }
+                    resolve(result);
+                });
+            });
+        }
+        else {
+            throw new Error('File type not supported');
+        }
+
+        if (data.length + 1 < classUsers.students.length) {
+            throw new Error('Number of student id is not enough');
+        }
+
+        for (let i = 0; i < classUsers.students.length; i++) {
+            classUsers.students[i].student_id = data[i + 1].student_id;
+        }
+        await this.classUserRepository.updateOne({ class_id: classId }, { students: classUsers.students });
+
+        return { message: 'Map student id successfully' };
     }
 }
