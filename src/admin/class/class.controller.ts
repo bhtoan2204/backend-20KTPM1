@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { Roles } from "src/utils/decorator/role.decorator";
 import { Role } from "src/utils/enum/role.enum";
@@ -7,6 +7,10 @@ import { RolesGuard } from "src/utils/guard/authorize/role.guard";
 import { ClassAdminService } from "./class.service";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import { GetClassesFilterDto } from "./dto/getClassFilter.dto";
+import { GetStudentDto } from "./dto/getStudent.dto";
+import { MapStudentDto } from "./dto/mapStudent.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { extname } from "path";
 
 @Controller('class')
 @ApiTags('Class for Admin')
@@ -26,10 +30,54 @@ export class ClassAdminController {
     }
 
     @UseInterceptors(CacheInterceptor)
+    @Post('/getTeachers')
+    @ApiOperation({ summary: 'Get teachers' })
+    async getTeachers(@Body() dto: GetStudentDto) {
+        return this.classAdminService.getTeachers(dto.class_id, dto.page, dto.itemPerPage);
+    }
+
+    @UseInterceptors(CacheInterceptor)
+    @Post('/getStudents')
+    @ApiOperation({ summary: 'Get students' })
+    async getStudents(@Body() dto: GetStudentDto) {
+        return this.classAdminService.getStudents(dto.class_id, dto.page, dto.itemPerPage);
+    }
+
+    @UseInterceptors(CacheInterceptor)
     @Get('/getClassDetail/:classId')
     @ApiParam({ name: 'classId', type: String })
     @ApiOperation({ summary: 'Get class detail' })
     async getClassDetail(@Param() params: any) {
         return this.classAdminService.getClassDetail(params.classId);
+    }
+
+    @Patch('/activateClass/:classId')
+    @ApiParam({ name: 'classId', type: String })
+    @ApiOperation({ summary: 'Activate class' })
+    async activateClass(@Param() params: any) {
+        return this.classAdminService.activateClass(params.classId);
+    }
+
+    @Patch('/manualMapStudentId')
+    @ApiOperation({ summary: 'Manual map student id' })
+    async manualMapStudentId(@Body() dto: MapStudentDto) {
+        return this.classAdminService.manualMapStudentId(dto.class_id, dto.user_id, dto.student_id);
+    }
+
+    @Patch('/mapStudentByExcel/:classId')
+    @ApiOperation({ summary: 'Map student by excel' })
+    @ApiParam({ name: 'classId', type: String })
+    @UseInterceptors(FileInterceptor('sheet', {
+        fileFilter: (req, file, callback) => {
+            const allowedExtensions = ['.csv'];
+            const fileExtension = extname(file.originalname).toLowerCase();
+            if (allowedExtensions.includes(fileExtension)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Only .xlxs and .csv files are allowed!'), false);
+        },
+    }))
+    async mapStudentByExcel(@UploadedFile() file: Express.Multer.File, @Param() params: any) {
+        return this.classAdminService.mapStudentByExcel(params.classId, file);
     }
 }

@@ -25,11 +25,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.17.1'
-
       - name: Install NestJS CLI
         run: npm install -g @nestjs/cli
 
